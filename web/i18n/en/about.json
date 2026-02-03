@@ -1,0 +1,34 @@
+{
+    "page.general": "what's Grab?",
+    "page.community": "community & support",
+
+    "page.privacy": "privacy policy",
+    "page.terms": "terms and ethics",
+    "page.credits": "thanks & licenses",
+
+    "heading.general": "general terms",
+    "heading.licenses": "licenses",
+    "heading.summary": "best way to save what you love",
+    "heading.privacy_efficiency": "leading privacy & efficiency",
+    "heading.community": "open community",
+    "heading.local": "local processing",
+    "heading.saving": "saving",
+    "heading.encryption": "encryption",
+    "heading.plausible": "anonymous traffic analytics",
+    "heading.cloudflare": "web privacy & security",
+    "heading.responsibility": "user responsibilities",
+    "heading.abuse": "reporting abuse",
+    "heading.motivation": "motivation",
+    "heading.testers": "beta testers",
+    "heading.partners": "partners",
+
+    "support.github": "check out Grab's source code, contribute changes, or report issues",
+    "support.discord": "chat with the community and developers about Grab or ask for help",
+    "support.twitter": "follow Grab's updates and development on your twitter timeline",
+    "support.telegram": "stay up to date with latest Grab updates via a telegram channel",
+    "support.bluesky": "follow Grab's updates and development on your bluesky feed",
+
+    "support.description.issue": "if you want to report a bug or some other recurring issue, please do it on github.",
+    "support.description.help": "use discord for any other questions. describe the issue properly in #grab-support or else no one will be able help you.",
+    "support.description.best-effort": "all support is best effort and not guaranteed, a reply might take some time."
+}
