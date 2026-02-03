@@ -54,7 +54,6 @@
             createDialog({
                 id: "settings-import-error",
                 type: "small",
-                meowbalt: "error",
                 bodyText: message,
                 buttons: [
                     {

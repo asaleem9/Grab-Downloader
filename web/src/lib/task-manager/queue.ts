@@ -131,7 +131,6 @@ const showError = (errorCode: string) => {
     return createDialog({
         id: "pipeline-error",
         type: "small",
-        meowbalt: "error",
         buttons: [
             {
                 text: get(t)("button.gotit"),
