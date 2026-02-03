@@ -20,3 +20,8 @@ docker-compose.yml
 
 # ide
 .vscode
+
+# Claude
+CLAUDE.md
+.claude/
+api/CLAUDE.md
