@@ -18,4 +18,11 @@ export { splitReveal, type SplitRevealOptions } from "./actions/split-reveal";
 export { liquidDrag, type LiquidDragOptions } from "./actions/draggable";
 
 export { scoped, transitionMap, flipList, type TimelineBuilder } from "./choreography/context";
-export { initPageTransitions, registerCurtain, type Curtain, type CurtainVariant } from "./transitions";
+export {
+    initPageTransitions,
+    registerCurtain,
+    type Curtain,
+    type CurtainOptions,
+    type CurtainVariant,
+    type CurtainDirection,
+} from "./transitions";

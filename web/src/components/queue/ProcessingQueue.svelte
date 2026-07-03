@@ -64,6 +64,12 @@
     beforeNavigate((event) => {
         if (event.type === "leave" && (totalProgress > 0 && totalProgress < 1)) {
             event.cancel();
+
+            /* the flask objects to being abandoned mid-download */
+            const flask = document.querySelector("#processing-status");
+            if (flask && motionOK()) {
+                gsap.fromTo(flask, { x: 0 }, { x: 7, duration: 0.5, ease: "wobble" });
+            }
         }
     });
 </script>

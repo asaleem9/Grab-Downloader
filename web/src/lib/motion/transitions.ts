@@ -3,9 +3,15 @@ import { onNavigate } from "$app/navigation";
 import { motionOK } from "./stores";
 
 export type CurtainVariant = "full" | "pane";
+export type CurtainDirection = "up" | "down" | "left" | "right";
+
+export type CurtainOptions = {
+    variant?: CurtainVariant;
+    direction?: CurtainDirection;
+};
 
 export type Curtain = {
-    cover: (variant?: CurtainVariant) => Promise<void>;
+    cover: (options?: CurtainOptions) => Promise<void>;
     reveal: () => Promise<void>;
 };
 
@@ -17,6 +23,9 @@ export function registerCurtain(c: Curtain) {
         if (curtain === c) curtain = null;
     };
 }
+
+/* tab order drives wipe direction: save -> settings -> about */
+const SECTION_ORDER = ["", "settings", "about"];
 
 /*
     liquid page transitions. must be called during root layout
@@ -36,12 +45,27 @@ export function initPageTransitions() {
         const to = navigation.to?.url.pathname;
         if (!from || !to || from === to) return;
 
-        /* subnav moves (settings/a -> settings/b) get the light pane sweep */
-        const variant: CurtainVariant =
-            from.split("/")[1] === to.split("/")[1] ? "pane" : "full";
+        const fromSection = from.split("/")[1];
+        const toSection = to.split("/")[1];
+
+        /* subnav moves (settings/a -> settings/b) get a light
+           vertical pane sweep; section changes wipe horizontally
+           in tab order */
+        let options: CurtainOptions;
+
+        if (fromSection === toSection) {
+            options = { variant: "pane", direction: "down" };
+        } else {
+            const fromIndex = SECTION_ORDER.indexOf(fromSection);
+            const toIndex = SECTION_ORDER.indexOf(toSection);
+            options = {
+                variant: "full",
+                direction: toIndex >= fromIndex ? "right" : "left",
+            };
+        }
 
         return new Promise<void>((resolve) => {
-            curtain!.cover(variant).then(resolve);
+            curtain!.cover(options).then(resolve);
             navigation.complete.then(() => curtain?.reveal()).catch(() => {});
         });
     });

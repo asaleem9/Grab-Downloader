@@ -2,6 +2,7 @@
     import { page } from "$app/stores";
 
     import { t } from "$lib/i18n/translations";
+    import { squish, magnetic } from "$lib/motion";
 
     export let name: string;
     export let path: string;
@@ -42,12 +43,16 @@
     on:focus={() => showTab(tab)}
     role="tab"
     aria-selected={isTabActive}
+    use:squish={{ intensity: 0.8 }}
+    use:magnetic={{ strength: 0.2, radius: 60 }}
 >
     {#if beta}
         <div class="beta-sign" aria-label={$t("general.beta")}>β</div>
     {/if}
 
-    <svelte:component this={icon} />
+    <span class="tab-droplet">
+        <svelte:component this={icon} />
+    </span>
     <span class="tab-title">{$t(`tabs.${name}`)}</span>
 </a>
 
@@ -57,122 +62,124 @@
         flex-direction: column;
         align-items: center;
         text-align: center;
-        gap: 3px;
-        padding: var(--sidebar-tab-padding) 3px;
-        color: var(--sidebar-highlight);
+        gap: 4px;
+        padding: calc(var(--sidebar-tab-padding) / 2) 3px;
+        color: var(--ink-soft);
         font-size: var(--sidebar-font-size);
-        opacity: 0.75;
         height: fit-content;
         border-radius: var(--border-radius);
-        transition: transform 0.2s;
 
         text-decoration: none;
         text-decoration-line: none;
         position: relative;
         scroll-behavior: smooth;
+        will-change: transform;
 
         cursor: pointer;
     }
 
+    .tab-droplet {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+
+        background: var(--milk);
+        border: 2.5px solid var(--ink);
+        border-radius: var(--blob-b);
+
+        transition:
+            width 0.35s var(--ease-liquid),
+            height 0.35s var(--ease-liquid),
+            background 0.25s,
+            border-color 0.25s,
+            border-radius 0.35s var(--ease-liquid);
+    }
+
     .sidebar-tab :global(svg) {
-        stroke-width: 1.2px;
-        height: 22px;
-        width: 22px;
+        stroke-width: 1.8px;
+        height: 20px;
+        width: 20px;
+        stroke: var(--ink);
+        transition: stroke 0.25s;
     }
 
-    :global([data-iphone="true"] .sidebar-tab svg) {
-        will-change: transform;
+    .sidebar-tab.active .tab-droplet {
+        width: 50px;
+        height: 50px;
+        background: var(--grape);
+        border-color: var(--grape-deep);
+        border-radius: var(--blob-a);
     }
 
-    .sidebar-tab.active {
-        color: var(--sidebar-bg);
-        background: var(--sidebar-highlight);
-        opacity: 1;
-        transform: none;
-        transition: none;
-        animation: pressButton 0.3s;
-        cursor: default;
-    }
-
-    .sidebar-tab:not(.active):active {
-        transform: scale(0.95);
-    }
-
-    :global([data-reduce-motion="true"]) .sidebar-tab:active {
-        transform: none;
-    }
-
-    .beta-sign {
-        position: absolute;
-        transform: translateX(16px) translateY(-6px);
-        opacity: 0.7;
+    .sidebar-tab.active :global(svg) {
+        stroke: var(--white);
+        height: 23px;
+        width: 23px;
     }
 
     .tab-title {
         white-space: nowrap;
+        font-weight: 700;
+        transition: color 0.25s;
     }
 
-    .sidebar-tab:active:not(.active) {
-        opacity: 1;
-    }
-
-    @keyframes pressButton {
-        0% {
-            transform: scale(0.9);
-        }
-        50% {
-            transform: scale(1.015);
-        }
-        100% {
-            transform: scale(1);
-        }
+    .sidebar-tab.active .tab-title {
+        color: var(--grape);
     }
 
     @media (hover: hover) {
-        .sidebar-tab:hover:not(.active) {
-            background-color: var(--button-hover-transparent);
+        .sidebar-tab:hover:not(.active) .tab-droplet {
+            background: var(--grape-milk);
         }
+    }
 
-        .sidebar-tab:active:not(.active),
-        .sidebar-tab:focus:hover:not(.active) {
-            background-color: var(--button-press-transparent);
-        }
+    .sidebar-tab:focus-visible {
+        outline: var(--focus-ring);
+        outline-offset: 2px;
+        border-radius: var(--border-radius);
+    }
 
-        .sidebar-tab:hover:not(.active) {
-            opacity: 1;
-        }
-
-        .sidebar-tab:active:not(.active),
-        .sidebar-tab:focus:hover:not(.active) {
-            opacity: 1;
-            box-shadow: 0 0 0 1px var(--sidebar-stroke) inset;
-        }
+    .beta-sign {
+        position: absolute;
+        transform: translateX(20px) translateY(-4px);
+        opacity: 0.7;
+        z-index: 2;
     }
 
     @media screen and (max-width: 535px) {
         .sidebar-tab {
-            padding: 5px var(--padding);
+            padding: 0 var(--padding);
+            gap: 2px;
             min-width: calc(var(--sidebar-width) / 2);
+            font-size: 10px;
+        }
+
+        .tab-droplet {
+            width: 30px;
+            height: 30px;
+            border-width: 2px;
+        }
+
+        .sidebar-tab :global(svg) {
+            height: 17px;
+            width: 17px;
+        }
+
+        .sidebar-tab.active .tab-droplet {
+            width: 38px;
+            height: 38px;
+            margin-top: -10px;
+        }
+
+        .sidebar-tab.active :global(svg) {
+            height: 19px;
+            width: 19px;
         }
 
         .sidebar-tab.active {
             z-index: 2;
-        }
-
-        .sidebar-tab:active:not(.active) {
-            transform: scale(0.9);
-        }
-
-        @keyframes pressButton {
-            0% {
-                transform: scale(0.8);
-            }
-            50% {
-                transform: scale(1.02);
-            }
-            100% {
-                transform: scale(1);
-            }
         }
     }
 </style>
