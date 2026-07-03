@@ -25,3 +25,4 @@ docker-compose.yml
 CLAUDE.md
 .claude/
 api/CLAUDE.md
+.playwright-mcp/
