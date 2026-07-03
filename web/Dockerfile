@@ -10,7 +10,7 @@ ENV WEB_HOST=${WEB_HOST}
 ENV WEB_DEFAULT_API=${WEB_DEFAULT_API}
 
 RUN apk add --no-cache nodejs npm git
-RUN npm install -g pnpm
+RUN npm install -g pnpm@9.6.0
 
 # Copy build stuff
 COPY pnpm-workspace.yaml /app/
