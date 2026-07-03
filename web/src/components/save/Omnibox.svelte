@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { tick } from "svelte";
+    import { tick, onMount } from "svelte";
     import { page } from "$app/state";
     import { goto } from "$app/navigation";
     import { browser } from "$app/environment";
@@ -7,12 +7,14 @@
     import { t } from "$lib/i18n/translations";
 
     import dialogs from "$lib/state/dialogs";
-    import { link } from "$lib/state/omnibox";
+    import { link, downloadButtonState } from "$lib/state/omnibox";
     import { hapticSwitch } from "$lib/haptics";
     import { updateSetting } from "$lib/state/settings";
     import { savingHandler } from "$lib/api/saving-handler";
     import { pasteLinkFromClipboard } from "$lib/clipboard";
     import { turnstileEnabled, turnstileSolved } from "$lib/state/turnstile";
+
+    import { gsap, EASE, motionLevel, motionOK } from "$lib/motion";
 
     import type { Optional } from "$lib/types/generic";
     import type { DownloadModeOption } from "$lib/types/settings";
@@ -20,18 +22,16 @@
     import ClearButton from "$components/save/buttons/ClearButton.svelte";
     import DownloadButton from "$components/save/buttons/DownloadButton.svelte";
 
-    import Switcher from "$components/buttons/Switcher.svelte";
+    import ModeMolecule from "$components/save/ModeMolecule.svelte";
     import OmniboxIcon from "$components/save/OmniboxIcon.svelte";
     import ActionButton from "$components/buttons/ActionButton.svelte";
     import CaptchaTooltip from "$components/save/CaptchaTooltip.svelte";
-    import SettingsButton from "$components/buttons/SettingsButton.svelte";
 
-    import IconMute from "$components/icons/Mute.svelte";
-    import IconMusic from "$components/icons/Music.svelte";
-    import IconSparkles from "$components/icons/Sparkles.svelte";
     import IconClipboard from "$components/icons/Clipboard.svelte";
 
     let linkInput: Optional<HTMLInputElement>;
+    let vessel: HTMLDivElement | undefined = $state();
+    let vesselRow: HTMLDivElement | undefined = $state();
 
     const validLink = (url: string) => {
         try {
@@ -75,6 +75,72 @@
         }
     });
 
+    /*
+        the character effects: on a successful grab the url's chars
+        get sucked left into the grabber; clearing drops them out of
+        the vessel. built on a throwaway overlay so the real input
+        can be cleared immediately.
+    */
+    const flyChars = (direction: "grab" | "fall") => {
+        const text = $link.slice(0, 42);
+        if (!motionOK() || !linkInput || !text) return;
+
+        const rect = linkInput.getBoundingClientRect();
+        const fx = document.createElement("div");
+        fx.className = "mono";
+        fx.style.cssText = `
+            position: fixed;
+            left: ${rect.left}px; top: ${rect.top}px;
+            height: ${rect.height}px;
+            display: flex; align-items: center;
+            font-size: 14px; font-weight: 500;
+            color: var(--ink);
+            z-index: 90; pointer-events: none;
+        `;
+        for (const ch of text) {
+            const span = document.createElement("span");
+            span.textContent = ch;
+            span.style.whiteSpace = "pre";
+            span.style.display = "inline-block";
+            fx.appendChild(span);
+        }
+        document.body.appendChild(fx);
+
+        const spans = Array.from(fx.children) as HTMLElement[];
+
+        if (direction === "grab") {
+            const grabber = document.querySelector("#grabber")?.getBoundingClientRect();
+            const gx = grabber ? grabber.left + grabber.width / 2 : rect.left;
+            const gy = grabber ? grabber.top + grabber.height / 2 : rect.top - 120;
+
+            gsap.to(spans, {
+                x: (_, el: HTMLElement) => gx - el.getBoundingClientRect().left,
+                y: gy - rect.top,
+                opacity: 0,
+                scale: 0.3,
+                stagger: { each: 0.012, from: "end" },
+                duration: 0.55,
+                ease: "power3.in",
+                onComplete: () => fx.remove(),
+            });
+        } else {
+            gsap.to(spans, {
+                y: 90,
+                opacity: 0,
+                rotation: () => gsap.utils.random(-80, 80),
+                stagger: { each: 0.008, from: "random" },
+                duration: 0.45,
+                ease: "power2.in",
+                onComplete: () => fx.remove(),
+            });
+        }
+    };
+
+    const clearInput = () => {
+        flyChars("fall");
+        $link = "";
+    };
+
     const pasteClipboard = async () => {
         if ($dialogs.length > 0 || isDisabled || isLoading) {
             return;
@@ -89,6 +155,15 @@
 
         if (linkMatch) {
             $link = linkMatch[0].split('，')[0];
+
+            /* the slurp: vessel gulps the pasted link in */
+            if (vessel && motionOK()) {
+                gsap.fromTo(
+                    vessel,
+                    { scaleX: 1.03, scaleY: 0.92 },
+                    { scaleX: 1, scaleY: 1, duration: 0.6, ease: EASE.pop }
+                );
+            }
 
             await tick(); // wait for button to render
             savingHandler({ url: $link });
@@ -113,7 +188,7 @@
         }
 
         if (["Escape", "Clear"].includes(e.key) && isFocused) {
-            $link = "";
+            clearInput();
         }
 
         if (e.target === linkInput) {
@@ -137,6 +212,51 @@
                 break;
         }
     };
+
+    onMount(() => {
+        let breath: gsap.core.Tween | null = null;
+
+        /* the vessel idly breathes between blob seeds */
+        const unsubMotion = motionLevel.subscribe((level) => {
+            breath?.kill();
+            breath = null;
+            if (level === "full" && vessel) {
+                breath = gsap.to(vessel, {
+                    borderRadius: "36px 44px 40px 46px / 42px 38px 46px 40px",
+                    duration: 4.5,
+                    yoyo: true,
+                    repeat: -1,
+                    ease: "sine.inOut",
+                });
+            } else if (vessel) {
+                gsap.set(vessel, { clearProps: "borderRadius" });
+            }
+        });
+
+        /* act out download states on the vessel itself */
+        const unsubState = downloadButtonState.subscribe((state) => {
+            if (!vesselRow || !motionOK()) return;
+
+            if (state === "error") {
+                gsap.fromTo(
+                    vesselRow,
+                    { x: 0 },
+                    { x: 8, duration: 0.55, ease: EASE.wobble }
+                );
+            }
+
+            if (state === "done") {
+                flyChars("grab");
+                $link = "";
+            }
+        });
+
+        return () => {
+            breath?.kill();
+            unsubMotion();
+            unsubState();
+        };
+    });
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
@@ -149,35 +269,44 @@
     {/if}
 
     <div
-        id="input-container"
-        class:focused={isFocused}
+        id="vessel-row"
+        class="goo-group"
+        bind:this={vesselRow}
         class:downloadable
-        class:clear-visible={clearVisible}
     >
-        <OmniboxIcon loading={isLoading || isBotCheckOngoing} />
+        <div
+            id="input-container"
+            bind:this={vessel}
+            class:focused={isFocused}
+            class:clear-visible={clearVisible}
+        >
+            <OmniboxIcon loading={isLoading || isBotCheckOngoing} />
 
-        <input
-            id="link-area"
-            bind:value={$link}
-            bind:this={linkInput}
-            oninput={() => (isFocused = true)}
-            onfocus={() => (isFocused = true)}
-            onblur={() => (isFocused = false)}
-            onmouseover={() => (isHovered = true)}
-            onmouseleave={() => (isHovered = false)}
-            spellcheck="false"
-            autocomplete="off"
-            autocapitalize="off"
-            maxlength="512"
-            placeholder={$t("save.input.placeholder")}
-            aria-label={isBotCheckOngoing
-                ? $t("a11y.save.link_area.turnstile")
-                : $t("a11y.save.link_area")}
-            data-form-type="other"
-            disabled={isDisabled}
-        />
+            <input
+                id="link-area"
+                bind:value={$link}
+                bind:this={linkInput}
+                oninput={() => (isFocused = true)}
+                onfocus={() => (isFocused = true)}
+                onblur={() => (isFocused = false)}
+                onmouseover={() => (isHovered = true)}
+                onmouseleave={() => (isHovered = false)}
+                spellcheck="false"
+                autocomplete="off"
+                autocapitalize="off"
+                maxlength="512"
+                placeholder={$t("save.input.placeholder")}
+                aria-label={isBotCheckOngoing
+                    ? $t("a11y.save.link_area.turnstile")
+                    : $t("a11y.save.link_area")}
+                data-form-type="other"
+                data-cursor="native"
+                disabled={isDisabled}
+            />
 
-        <ClearButton click={() => ($link = "")} />
+            <ClearButton click={clearInput} />
+        </div>
+
         <DownloadButton
             url={$link}
             bind:disabled={isDisabled}
@@ -186,32 +315,7 @@
     </div>
 
     <div id="action-container">
-        <Switcher>
-            <SettingsButton
-                settingContext="save"
-                settingId="downloadMode"
-                settingValue="auto"
-            >
-                <IconSparkles />
-                {$t("save.auto")}
-            </SettingsButton>
-            <SettingsButton
-                settingContext="save"
-                settingId="downloadMode"
-                settingValue="audio"
-            >
-                <IconMusic />
-                {$t("save.audio")}
-            </SettingsButton>
-            <SettingsButton
-                settingContext="save"
-                settingId="downloadMode"
-                settingValue="mute"
-            >
-                <IconMute />
-                {$t("save.mute")}
-            </SettingsButton>
-        </Switcher>
+        <ModeMolecule />
 
         <ActionButton id="paste" click={pasteClipboard}>
             <IconClipboard />
@@ -227,30 +331,47 @@
         flex-direction: column;
         max-width: 640px;
         width: 100%;
-        gap: 6px;
+        gap: 14px;
         position: relative;
     }
 
-    #input-container {
-        --input-padding: 10px;
+    #vessel-row {
         display: flex;
-        box-shadow: 0 0 0 1.5px var(--input-border) inset;
-        /* webkit can't render the 1.5px box shadow properly,
-           so we duplicate the border as outline to fix it visually */
-        outline: 1.5px solid var(--input-border);
-        outline-offset: -1.5px;
-        border-radius: var(--border-radius);
-        align-items: center;
-        gap: var(--input-padding);
-        font-size: 14px;
-        flex: 1;
+        align-items: stretch;
+        width: 100%;
+        filter: url(#goo-ui);
     }
 
-    #input-container:not(.clear-visible) :global(#clear-button) {
+    :global([data-fx-tier="low"]) #vessel-row {
+        filter: none;
+    }
+
+    #vessel-row:not(.downloadable) :global(#grab-button) {
         display: none;
     }
 
-    #input-container:not(.downloadable) :global(#download-button) {
+    #input-container {
+        --input-padding: 12px;
+        display: flex;
+        position: relative;
+        align-items: center;
+        gap: var(--input-padding);
+        flex: 1;
+
+        background: var(--milk);
+        border: 2.5px solid var(--ink);
+        border-radius: 40px 38px 44px 36px / 38px 46px 38px 44px;
+
+        font-size: 14px;
+        transition: border-color 0.25s;
+        will-change: border-radius;
+    }
+
+    #input-container.focused {
+        border-color: var(--grape);
+    }
+
+    #input-container:not(.clear-visible) :global(#clear-button) {
         display: none;
     }
 
@@ -263,33 +384,16 @@
         padding-left: var(--input-padding);
     }
 
-    #input-container.downloadable {
-        padding-right: 0;
-    }
-
-    #input-container.downloadable:dir(rtl) {
-        padding-left: 0;
-    }
-
-    #input-container.focused {
-        box-shadow: none;
-        outline: var(--secondary) 2px solid;
-        outline-offset: -1px;
-    }
-
-    #input-container.focused :global(#input-icons svg) {
-        stroke: var(--secondary);
-    }
-
-    #input-container.downloadable :global(#input-icons svg) {
-        stroke: var(--secondary);
+    #input-container.focused :global(#input-icons svg),
+    #vessel-row.downloadable :global(#input-icons svg) {
+        stroke: var(--grape);
     }
 
     #link-area {
         display: flex;
         width: 100%;
         margin: 0;
-        padding: var(--input-padding) 0;
+        padding: 13px 0;
         padding-left: calc(var(--input-padding) + 28px);
         height: 18px;
 
@@ -298,7 +402,7 @@
         border: none;
         outline: none;
         background-color: transparent;
-        color: var(--secondary);
+        color: var(--ink);
 
         -webkit-tap-highlight-color: transparent;
         flex: 1;
@@ -318,7 +422,7 @@
     }
 
     #link-area::placeholder {
-        color: var(--gray);
+        color: var(--ink-soft);
         /* fix for firefox */
         opacity: 1;
     }
@@ -331,10 +435,23 @@
     #action-container {
         display: flex;
         flex-direction: row;
+        align-items: flex-start;
+        justify-content: space-between;
     }
 
-    #action-container {
-        justify-content: space-between;
+    #action-container :global(#button-paste) {
+        border: 2.5px solid var(--ink);
+        border-radius: var(--blob-c);
+        background: var(--tangerine);
+        color: var(--ink);
+        font-weight: 700;
+        padding: 8px 16px;
+    }
+
+    @media (hover: hover) {
+        #action-container :global(#button-paste:hover) {
+            background: var(--tangerine-milk);
+        }
     }
 
     #paste-mobile-text {
@@ -344,10 +461,11 @@
     @media screen and (max-width: 440px) {
         #action-container {
             flex-direction: column;
-            gap: 5px;
+            align-items: center;
+            gap: 10px;
         }
 
-        #action-container :global(.button) {
+        #action-container :global(#paste) {
             width: 100%;
         }
 

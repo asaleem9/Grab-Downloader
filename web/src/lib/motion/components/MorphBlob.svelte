@@ -1,17 +1,19 @@
 <script lang="ts" module>
-    /* hand-drawn organic presets on a 200x200 box; morph targets */
+    /* hand-drawn organic presets on a 200x200 box; morph targets.
+       deliberately lumpy - a blob that reads as a circle is a
+       wasted blob */
     export const BLOB_PATHS = [
-        "M100,15 C140,10 178,38 184,80 C190,122 168,164 128,178 C88,192 44,178 26,142 C8,106 14,60 44,36 C66,18 76,18 100,15 Z",
-        "M104,12 C146,16 184,48 182,92 C180,136 148,172 106,180 C64,188 28,160 20,118 C12,76 30,38 66,22 C80,16 90,11 104,12 Z",
-        "M96,20 C128,6 172,22 186,58 C200,94 184,140 152,164 C120,188 72,190 44,164 C16,138 10,92 30,60 C50,28 72,30 96,20 Z",
-        "M100,10 C132,18 150,40 168,70 C186,100 190,140 164,164 C138,188 94,192 60,176 C26,160 6,124 16,88 C26,52 68,2 100,10 Z",
-        "M92,16 C130,8 170,30 182,66 C194,102 180,148 148,170 C116,192 66,188 40,160 C14,132 12,84 34,54 C56,24 64,22 92,16 Z",
-        "M108,14 C150,20 180,54 178,96 C176,138 142,168 104,176 C66,184 30,166 18,128 C6,90 22,48 56,28 C74,18 88,12 108,14 Z",
+        "M104,22 C144,6 182,36 184,74 C186,106 158,118 162,146 C166,176 136,192 104,184 C76,177 74,196 48,180 C18,162 26,128 22,100 C18,68 34,52 58,40 C78,30 82,31 104,22 Z",
+        "M96,14 C126,10 140,34 166,44 C192,54 196,90 184,118 C172,146 178,168 150,180 C122,192 100,172 72,178 C44,184 20,164 22,132 C24,104 8,86 20,60 C32,32 66,18 96,14 Z",
+        "M108,18 C138,26 178,20 188,54 C198,86 168,102 170,132 C172,162 152,186 120,186 C90,186 82,168 54,166 C26,164 8,138 14,108 C20,80 36,74 46,50 C58,22 78,10 108,18 Z",
+        "M92,20 C122,4 158,16 172,44 C188,74 210,96 192,126 C176,152 148,146 128,166 C108,186 76,196 50,178 C24,160 30,130 24,104 C18,76 26,54 48,40 C64,30 72,30 92,20 Z",
+        "M100,12 C134,14 152,42 176,58 C198,74 194,108 180,134 C166,160 142,158 118,174 C94,190 60,188 42,162 C24,138 34,116 26,90 C18,60 40,44 62,32 C76,24 84,11 100,12 Z",
+        "M110,24 C146,16 172,44 178,78 C184,110 202,134 182,158 C162,182 130,172 102,180 C74,188 44,182 30,154 C16,128 30,108 26,80 C22,52 44,34 72,28 C86,25 96,27 110,24 Z",
     ];
 </script>
 
 <script lang="ts">
-    import { onMount } from "svelte";
+    import { onMount, untrack } from "svelte";
 
     import { gsap } from "../gsap";
     import { EASE } from "../eases";
@@ -44,6 +46,9 @@
     let pathEl: SVGPathElement;
     let idleTween: gsap.core.Tween | null = null;
     let idleIndex = 0;
+
+    /* captured once: svelte must never rewrite `d` mid-morph */
+    const initialD = untrack(() => paths[state ?? 0]);
 
     const startIdle = () => {
         if (idleTween || !idle) return;
@@ -109,12 +114,16 @@
     aria-hidden="true"
     focusable="false"
 >
-    <path bind:this={pathEl} d={paths[state ?? 0]} {fill} />
+    <path bind:this={pathEl} d={initialD} {fill} />
 </svg>
 
 <style>
     .morph-blob {
         display: block;
         overflow: visible;
+    }
+
+    .morph-blob path {
+        transition: fill 0.35s;
     }
 </style>
