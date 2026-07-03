@@ -25,6 +25,7 @@
     "homepage": "https://grab.tools/",
     "devDependencies": {
         "@eslint/js": "^9.39.2",
+        "@fontsource-variable/baloo-2": "^5.2.7",
         "@fontsource/ibm-plex-mono": "^5.2.7",
         "@imput/libav.js-encode-cli": "6.8.7",
         "@imput/libav.js-remux-cli": "^6.8.7",

@@ -1,6 +1,7 @@
 <script lang="ts">
     import "../app.css";
 
+    import "@fontsource-variable/baloo-2";
     import "@fontsource/ibm-plex-mono/400.css";
     import "@fontsource/ibm-plex-mono/400-italic.css";
     import "@fontsource/ibm-plex-mono/500.css";
