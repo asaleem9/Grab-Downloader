@@ -1,12 +1,10 @@
 <script lang="ts">
     import "../app.css";
-    import "../fonts/noto-mono-grab.css";
 
     import "@fontsource/ibm-plex-mono/400.css";
     import "@fontsource/ibm-plex-mono/400-italic.css";
     import "@fontsource/ibm-plex-mono/500.css";
 
-    import { onMount } from "svelte";
     import { page } from "$app/stores";
     import { updated } from "$app/stores";
     import { browser } from "$app/environment";
@@ -21,7 +19,7 @@
 
     import { device, app } from "$lib/device";
     import { getServerInfo } from "$lib/api/server-info";
-    import currentTheme, { statusBarColors } from "$lib/state/theme";
+    import { statusBarColors } from "$lib/state/theme";
     import { turnstileCreated, turnstileEnabled } from "$lib/state/turnstile";
 
     import Sidebar from "$components/sidebar/Sidebar.svelte";
@@ -38,7 +36,6 @@
         $settings.accessibility.reduceTransparency ||
         device.prefers.reducedTransparency;
 
-    $: preloadAssets = false;
     $: plausibleLoaded = false;
 
     afterNavigate(async () => {
@@ -49,10 +46,6 @@
         if ($page.url.pathname === "/") {
             await getServerInfo();
         }
-    });
-
-    onMount(() => {
-        preloadAssets = true;
     });
 </script>
 
@@ -68,15 +61,9 @@
     {/if}
 
     {#if device.is.mobile}
-        <meta
-            name="theme-color"
-            content={statusBarColors.mobile[$currentTheme]}
-        />
+        <meta name="theme-color" content={statusBarColors.mobile} />
     {:else}
-        <meta
-            name="theme-color"
-            content={statusBarColors.desktop[$currentTheme]}
-        />
+        <meta name="theme-color" content={statusBarColors.desktop} />
     {/if}
 
     {#if plausibleLoaded || (browser && env.PLAUSIBLE_ENABLED && !$settings.privacy.disableAnalytics)}
@@ -91,14 +78,7 @@
     {/if}
 </svelte:head>
 
-<div
-    style="display: contents"
-    data-theme={browser ? $currentTheme : undefined}
-    lang={$locale}
->
-    {#if preloadAssets}
-        <div id="preload" aria-hidden="true">??</div>
-    {/if}
+<div style="display: contents" lang={$locale}>
     <div
         id="cobalt"
         class:loaded={browser}
@@ -182,12 +162,6 @@
     }
 
     @media screen and (max-width: 535px) {
-        /* dark navbar cuz it looks better on mobile */
-        :global([data-theme="light"]) {
-            --sidebar-bg: #000000;
-            --sidebar-highlight: var(--primary);
-        }
-
         #cobalt {
             display: grid;
             grid-template-columns: unset;
@@ -209,24 +183,5 @@
             border-bottom-left-radius: calc(var(--border-radius) * 2);
             border-bottom-right-radius: calc(var(--border-radius) * 2);
         }
-    }
-
-    /* preload assets to prevent flickering when they appear on screen */
-    #preload {
-        width: 0;
-        height: 0;
-        position: absolute;
-        z-index: -10;
-        content: url(/meowbalt/smile.png) url(/meowbalt/error.png)
-            url(/meowbalt/question.png) url(/meowbalt/think.png);
-
-        font-family: "Noto Sans Mono";
-        font-size: 0;
-        opacity: 0;
-
-        pointer-events: none;
-        user-select: none;
-        -webkit-user-select: none;
-        -webkit-user-drag: none;
     }
 </style>

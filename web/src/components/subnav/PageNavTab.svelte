@@ -80,10 +80,6 @@
         box-shadow: var(--button-box-shadow);
     }
 
-    :global([data-theme="dark"]) .subnav-tab:not(.active) .tab-icon {
-        background: rgba(255, 255, 255, 0.1);
-    }
-
     .subnav-tab:not(.active) .tab-icon :global(svg) {
         stroke: var(--icon-color);
     }

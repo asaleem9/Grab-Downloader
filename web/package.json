@@ -26,7 +26,6 @@
     "devDependencies": {
         "@eslint/js": "^9.39.2",
         "@fontsource/ibm-plex-mono": "^5.2.7",
-        "@fontsource/redaction-10": "^5.2.5",
         "@imput/libav.js-encode-cli": "6.8.7",
         "@imput/libav.js-remux-cli": "^6.8.7",
         "@imput/version-info": "workspace:^",

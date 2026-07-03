@@ -1,5 +1,5 @@
-// needed so that changelog files are appropriately
-// typed as svelte components
+// needed so that markdown files (about pages) are
+// appropriately typed as svelte components
 declare module '*.md' {
     import type { SvelteComponentDev } from 'svelte/internal';
 

@@ -15,7 +15,6 @@
 
     import DialogContainer from "$components/dialog/DialogContainer.svelte";
 
-    import Meowbalt from "$components/misc/Meowbalt.svelte";
     import DialogButtons from "$components/dialog/DialogButtons.svelte";
     import SavingTutorial from "$components/dialog/SavingTutorial.svelte";
     import VerticalActionButton from "$components/buttons/VerticalActionButton.svelte";
@@ -47,10 +46,6 @@
 
 <DialogContainer {id} {dismissable} bind:close>
     <div class="dialog-body popup-body">
-        <div class="meowbalt-container">
-            <Meowbalt emotion="think" />
-        </div>
-
         <div class="dialog-inner-container">
             <div class="popup-header">
                 <IconFileDownload />
@@ -159,14 +154,6 @@
         width: calc(100% - var(--padding) - var(--dialog-padding) * 2);
         max-height: 70%;
         margin: calc(var(--padding) / 2);
-    }
-
-    .meowbalt-container {
-        position: absolute;
-        top: -126px;
-        right: 0;
-        /* simulate meowbalt being behind the popup */
-        clip-path: inset(0px 0px 14px 0px);
     }
 
     .popup-header {

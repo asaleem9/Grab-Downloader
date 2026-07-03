@@ -79,14 +79,7 @@
 
     #processing-status.completed {
         box-shadow: 0 0 0 2px var(--blue) inset;
-    }
-
-    :global([data-theme="light"]) #processing-status.completed {
         background-color: #e0eeff;
-    }
-
-    :global([data-theme="dark"]) #processing-status.completed {
-        background-color: #1f3249;
     }
 
     .icon-holder {
