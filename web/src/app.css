@@ -441,6 +441,23 @@ tr th:first-child {
     }
 }
 
+/* the liquid cursor replaces the native one on fine pointers;
+   inputs, selects and embedded iframes escape back to native */
+html.liquid-cursor,
+html.liquid-cursor * {
+    cursor: none !important;
+}
+
+html.liquid-cursor [data-cursor="native"],
+html.liquid-cursor [data-cursor="native"] * {
+    cursor: auto !important;
+}
+
+/* goo is a luxury: weak devices get plain blob radii */
+[data-fx-tier="low"] .goo-group {
+    filter: none !important;
+}
+
 [data-reduce-motion="true"] * {
     animation: none !important;
     transition: none !important;

@@ -73,10 +73,6 @@
         outline-offset: 2px;
     }
 
-    #processing-status:active {
-        transform: scale(0.9);
-    }
-
     #processing-status.completed {
         box-shadow: 0 0 0 2px var(--blue) inset;
         background-color: #e0eeff;

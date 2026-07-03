@@ -6,6 +6,7 @@
     import "@fontsource/ibm-plex-mono/400-italic.css";
     import "@fontsource/ibm-plex-mono/500.css";
 
+    import { onMount } from "svelte";
     import { page } from "$app/stores";
     import { updated } from "$app/stores";
     import { browser } from "$app/environment";
@@ -23,12 +24,20 @@
     import { statusBarColors } from "$lib/state/theme";
     import { turnstileCreated, turnstileEnabled } from "$lib/state/turnstile";
 
+    import { motionLevel, fxTier, initGlobalSquish, initPageTransitions } from "$lib/motion";
+    import Goo from "$lib/motion/components/Goo.svelte";
+    import LiquidCursor from "$lib/motion/components/LiquidCursor.svelte";
+    import AmbientLayer from "$lib/motion/components/AmbientLayer.svelte";
+    import LiquidCurtain from "$lib/motion/components/LiquidCurtain.svelte";
+
     import Sidebar from "$components/sidebar/Sidebar.svelte";
     import Turnstile from "$components/misc/Turnstile.svelte";
     import NotchSticker from "$components/misc/NotchSticker.svelte";
     import DialogHolder from "$components/dialog/DialogHolder.svelte";
     import ProcessingQueue from "$components/queue/ProcessingQueue.svelte";
     import UpdateNotification from "$components/misc/UpdateNotification.svelte";
+
+    initPageTransitions();
 
     $: reduceMotion =
         $settings.accessibility.reduceMotion || device.prefers.reducedMotion;
@@ -48,6 +57,8 @@
             await getServerInfo();
         }
     });
+
+    onMount(() => initGlobalSquish());
 </script>
 
 <svelte:head>
@@ -88,7 +99,13 @@
         data-mobile={device.is.mobile}
         data-reduce-motion={reduceMotion}
         data-reduce-transparency={reduceTransparency}
+        data-fx-tier={$fxTier}
     >
+        <Goo id="goo-ui" blur={8} />
+        <Goo id="goo-cursor" blur={5} contrast={24} shift={11} composite={false} />
+        {#if browser && $motionLevel === "full"}
+            <LiquidCursor />
+        {/if}
         {#if device.is.iPhone && app.is.installed}
             <NotchSticker />
         {/if}
@@ -99,6 +116,8 @@
         {/if}
         <ProcessingQueue />
         <div id="content">
+            <AmbientLayer />
+            <LiquidCurtain />
             {#if ($turnstileEnabled && $page.url.pathname === "/") || $turnstileCreated}
                 <Turnstile />
             {/if}
@@ -140,7 +159,10 @@
     #content {
         display: flex;
         overflow: scroll;
-        background-color: var(--primary);
+        position: relative;
+        /* background lives on #cobalt so the ambient layer's
+           negative z-index children can paint above it */
+        background-color: transparent;
         box-shadow: 0 0 0 var(--content-border-thickness) var(--content-border);
         margin-left: var(--content-border-thickness);
     }
