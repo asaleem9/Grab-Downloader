@@ -1,9 +1,13 @@
 <script lang="ts">
+    import { onMount } from "svelte";
+
     import { t } from "$lib/i18n/translations";
     import { formatFileSize } from "$lib/util";
     import { downloadFile } from "$lib/download";
     import { getProgress } from "$lib/task-manager/queue";
     import { savingHandler } from "$lib/api/saving-handler";
+
+    import { gsap, motionOK } from "$lib/motion";
 
     import { removeItem } from "$lib/state/task-manager/queue";
     import { queueVisible } from "$lib/state/queue-visibility";
@@ -40,8 +44,35 @@
 
     let { id, info }: Props = $props();
 
+    let root: HTMLDivElement | undefined = $state();
+
     let retrying = $state(false);
     let downloading = $state(false);
+
+    /* bubbles float up into place... */
+    onMount(() => {
+        if (root && motionOK()) {
+            gsap.from(root, {
+                y: 22,
+                scale: 0.92,
+                opacity: 0,
+                duration: 0.55,
+                ease: "back.out(1.5)",
+            });
+        }
+    });
+
+    /* ...and pop out of existence */
+    const removeWithPop = () => {
+        if (!root || !motionOK()) return removeItem(id);
+        gsap.to(root, {
+            scale: 0,
+            opacity: 0,
+            duration: 0.22,
+            ease: "back.in(2)",
+            onComplete: () => removeItem(id),
+        });
+    };
 
     const retry = async (info: CobaltQueueItem) => {
         if (info.canRetry && info.originalRequest) {
@@ -169,10 +200,12 @@
 
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <div
-    class="processing-item"
+    class="processing-item state-{info.state}"
+    bind:this={root}
     role="listitem"
     tabindex={$queueVisible ? 0 : -1}
     class:queue-hidden={!$queueVisible}
+    data-media={info.mediaType}
 >
     <div class="processing-info">
         <div class="file-title">
@@ -247,7 +280,7 @@
             <button
                 class="button action-button"
                 aria-label={$t(`button.${info.state === "done" ? "delete" : "remove"}`)}
-                onclick={() => removeItem(id)}
+                onclick={removeWithPop}
                 disabled={downloading}
             >
                 <IconX />
@@ -268,19 +301,53 @@
 
     .processing-item {
         width: 100%;
-        padding: 8px 0;
+        padding: 9px 12px;
         gap: 8px;
-        border-bottom: 1.5px var(--button-elevated) solid;
+        margin-bottom: 8px;
+        box-sizing: border-box;
+
+        background: var(--milk);
+        border: 2px solid var(--ink);
+        /* absolute radii: percentage blobs turn wide rows into ellipses */
+        border-radius: 18px 24px 20px 26px / 24px 18px 26px 20px;
+        will-change: transform;
+    }
+
+    .processing-item.state-done {
+        background: var(--lime-milk);
+    }
+
+    .processing-item.state-error {
+        background: var(--splat-milk);
     }
 
     .processing-type {
         display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 26px;
+        height: 26px;
+        border-radius: var(--blob-b);
+        background: var(--milk-deep);
+    }
+
+    .processing-item[data-media="video"] .processing-type {
+        background: var(--grape-milk);
+    }
+
+    .processing-item[data-media="audio"] .processing-type {
+        background: var(--tangerine-milk);
+    }
+
+    .processing-item[data-media="image"] .processing-type {
+        background: var(--lime-milk);
     }
 
     .processing-type :global(svg) {
-        width: 18px;
-        height: 18px;
-        stroke-width: 1.5px;
+        width: 16px;
+        height: 16px;
+        stroke-width: 2px;
+        stroke: var(--ink);
     }
 
     .processing-info {
@@ -301,7 +368,8 @@
     .file-title {
         display: flex;
         flex-direction: row;
-        gap: 4px;
+        align-items: center;
+        gap: 7px;
         line-break: anywhere;
     }
 
@@ -309,6 +377,8 @@
         overflow: hidden;
         white-space: pre;
         text-overflow: ellipsis;
+        font-family: var(--font-mono);
+        font-size: 12.5px;
     }
 
     .file-status {
@@ -356,11 +426,17 @@
         gap: 4px;
     }
 
+    .action-button {
+        border: 2px solid var(--ink);
+        border-radius: var(--blob-b);
+        background: var(--milk);
+    }
+
     @media (hover: hover) {
         .file-actions {
             position: absolute;
-            right: 0;
-            background-color: var(--button);
+            right: 8px;
+            background-color: transparent;
             height: 90%;
             padding-left: 18px;
 
@@ -369,11 +445,6 @@
             opacity: 0;
             transition: opacity 0.15s, transform 0.15s;
 
-            mask-image: linear-gradient(
-                90deg,
-                rgba(255, 255, 255, 0) 0%,
-                rgba(0, 0, 0, 1) 20%
-            );
         }
 
         .queue-hidden .file-actions {
@@ -381,18 +452,12 @@
         }
 
         :global([dir="rtl"]) .file-actions {
-            left: 0;
+            left: 8px;
             right: unset;
             padding-left: 0;
             padding-right: 18px;
 
             transform: translateX(-5px);
-
-            mask-image: linear-gradient(
-                -90deg,
-                rgba(255, 255, 255, 0) 0%,
-                rgba(0, 0, 0, 1) 20%
-            );
         }
 
         .processing-item:hover .file-actions,
@@ -410,7 +475,7 @@
     }
 
     .action-button {
-        padding: 8px;
+        padding: 7px;
         height: auto;
         box-shadow: none;
         transition: opacity 0.2s;
@@ -433,12 +498,7 @@
         will-change: transform;
     }
 
-    .processing-item:first-child {
-        padding-top: 0;
-    }
-
     .processing-item:last-child {
-        padding-bottom: 16px;
-        border: none;
+        margin-bottom: 16px;
     }
 </style>

@@ -55,13 +55,19 @@
 
     .popup-button {
         width: 100%;
-        height: 40px;
+        height: 42px;
+        border-radius: var(--blob-c);
+        font-weight: 700;
         transition: 0.2s opacity;
     }
 
+    .link-button {
+        border-radius: var(--blob-c);
+    }
+
     .popup-button.red {
-        background-color: var(--red);
-        color: var(--white);
+        background-color: var(--splat);
+        color: var(--ink);
     }
 
     .popup-button[disabled] {

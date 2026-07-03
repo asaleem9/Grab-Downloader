@@ -9,22 +9,20 @@
     }
 
     let { percentage = 0, workerId, pipelineResults }: Props = $props();
+
+    const done = $derived(!percentage && !!pipelineResults[workerId]);
 </script>
 
-<div class="file-progress">
-    {#if percentage}
+<div class="liquid-tube" class:done>
+    {#if percentage || done}
         <div
-            class="progress"
-            style="width: {Math.min(100, percentage)}%"
-        ></div>
-    {:else if pipelineResults[workerId]}
-        <div
-            class="progress"
-            style="width: 100%"
+            class="tube-fill"
+            class:full={done || percentage >= 100}
+            style="width: {done ? 100 : Math.min(100, percentage)}%"
         ></div>
     {:else}
         <Skeleton
-            height="6px"
+            height="8px"
             width="100%"
             class="elevated indeterminate-progress"
         />
@@ -32,23 +30,32 @@
 </div>
 
 <style>
-    .file-progress {
+    .liquid-tube {
         width: 100%;
-        background-color: var(--button-elevated);
+        height: 8px;
+        background-color: var(--milk-deep);
+        border: 2px solid var(--ink);
+        border-radius: 8px;
+        overflow: hidden;
+        box-sizing: border-box;
     }
 
-    .file-progress,
-    .file-progress .progress {
-        height: 6px;
-        border-radius: 10px;
-        transition: width 0.1s;
-    }
-
-    .file-progress :global(.indeterminate-progress) {
+    .liquid-tube :global(.indeterminate-progress) {
         display: block;
+        border-radius: 0;
     }
 
-    .file-progress .progress {
-        background-color: var(--blue);
+    .tube-fill {
+        height: 100%;
+        border-radius: 0 6px 6px 0;
+        background-color: var(--grape);
+        /* the meniscus: a bright leading edge on the liquid */
+        box-shadow: inset -2.5px 0 0 var(--grape-milk);
+        transition: width 0.15s;
+    }
+
+    .tube-fill.full {
+        background-color: var(--green);
+        box-shadow: inset -2.5px 0 0 var(--lime);
     }
 </style>

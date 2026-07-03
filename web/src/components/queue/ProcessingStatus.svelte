@@ -1,6 +1,14 @@
 <script lang="ts">
     import { t } from "$lib/i18n/translations";
+    import { gsap, EASE, motionOK } from "$lib/motion";
     import IconArrowDown from "@tabler/icons-svelte/IconArrowDown.svelte";
+
+    /*
+        the flask: queue progress as liquid level. the wave surface
+        drifts sideways forever (compositor-only), sloshes while
+        indeterminate, and the whole flask burps when everything
+        is done.
+    */
 
     type Props = {
         indeterminate?: boolean;
@@ -14,8 +22,14 @@
         expandAction
     }: Props = $props();
 
-    let progressStroke = $derived(`${progress}, 100`);
-    const indeterminateStroke = "15, 5";
+    let button: HTMLButtonElement | undefined = $state();
+
+    const completed = $derived(progress >= 100);
+
+    /* liquid level in viewbox units: empty sits below the clip */
+    const level = $derived(
+        indeterminate ? 27 : 42 - (Math.min(100, progress) / 100) * 42
+    );
 
     let ariaState = $derived(
         progress > 0 && progress < 100
@@ -24,28 +38,51 @@
             ? "completed"
             : "default"
     )
+
+    /* burp on completion */
+    let wasCompleted = false;
+    $effect(() => {
+        if (completed && !wasCompleted && button && motionOK()) {
+            gsap.fromTo(
+                button,
+                { scaleX: 1.15, scaleY: 0.82 },
+                { scaleX: 1, scaleY: 1, duration: 0.7, ease: EASE.pop }
+            );
+        }
+        wasCompleted = completed;
+    });
 </script>
 
 <button
     id="processing-status"
+    bind:this={button}
     onclick={expandAction}
     class="button"
-    class:completed={progress >= 100}
+    class:completed
+    class:filling={progress > 0 || indeterminate}
     aria-label={$t(`a11y.queue.status.${ariaState}`)}
 >
-    <svg
-        id="progress-ring"
-        class:indeterminate
-        class:progressive={progress > 0 && !indeterminate}
-    >
-        <circle
-            cx="19"
-            cy="19"
-            r="16"
-            fill="none"
-            stroke-dasharray={indeterminate
-                ? indeterminateStroke
-                : progressStroke}
+    <svg id="flask" viewBox="0 0 42 42" aria-hidden="true">
+        <defs>
+            <clipPath id="flask-clip">
+                <path
+                    d="M21,2.5 C30,1 38,7 39.5,16 C41,25 37,34 28,38.5 C19,43 8,39 4.5,30 C1,21 3,10 10,5.5 C14,3 17,3.2 21,2.5 Z"
+                />
+            </clipPath>
+        </defs>
+        <g clip-path="url(#flask-clip)">
+            <g class="liquid" style="transform: translateY({level}px)">
+                <g class="slosh" class:sloshing={indeterminate}>
+                    <path
+                        class="liquid-fill"
+                        d="M-42,3 Q-36,0 -31,3 T-21,3 T-10,3 T0,3 T10,3 T21,3 T31,3 T42,3 T52,3 T63,3 T73,3 T84,3 L84,60 L-42,60 Z"
+                    />
+                </g>
+            </g>
+        </g>
+        <path
+            class="flask-outline"
+            d="M21,2.5 C30,1 38,7 39.5,16 C41,25 37,34 28,38.5 C19,43 8,39 4.5,30 C1,21 3,10 10,5.5 C14,3 17,3.2 21,2.5 Z"
         />
     </svg>
     <div class="icon-holder">
@@ -56,86 +93,97 @@
 <style>
     #processing-status {
         pointer-events: all;
-        padding: 7px;
-        border-radius: 30px;
-
-        filter: drop-shadow(0 0 3px var(--button-elevated-hover));
-
-        transition:
-            background-color 0.2s,
-            transform 0.2s;
-
-        will-change: transform, background-color;
-    }
-
-    #processing-status:focus-visible {
-        outline: 2px solid var(--secondary);
-        outline-offset: 2px;
-    }
-
-    #processing-status.completed {
-        box-shadow: 0 0 0 2px var(--blue) inset;
-        background-color: #e0eeff;
-    }
-
-    .icon-holder {
-        display: flex;
-        background-color: var(--button-elevated-hover);
-        padding: 2px;
-        border-radius: 20px;
-        transition: background-color 0.2s;
-    }
-
-    .icon-holder :global(svg) {
-        height: 21px;
-        width: 21px;
-        stroke: var(--secondary);
-        stroke-width: 1.5px;
-        transition: stroke 0.2s;
-    }
-
-    .completed .icon-holder {
-        background-color: var(--blue);
-    }
-
-    .completed .icon-holder :global(svg) {
-        stroke: white;
-    }
-
-    #progress-ring {
-        position: absolute;
-        transform: rotate(-90deg);
-        width: 38px;
-        height: 38px;
-        opacity: 0;
-        transition: opacity 0.2s;
-    }
-
-    #progress-ring circle {
-        stroke: var(--blue);
-        stroke-width: 4;
-        stroke-dashoffset: 0;
-    }
-
-    #progress-ring.progressive circle {
-        transition: stroke-dasharray 0.2s;
-    }
-
-    #progress-ring.progressive,
-    #progress-ring.indeterminate {
-        opacity: 1;
-    }
-
-    #progress-ring.indeterminate {
-        animation: spinner 3s linear infinite;
+        position: relative;
+        width: 48px;
+        height: 48px;
+        padding: 0;
+        border-radius: var(--blob-b);
+        background: var(--milk);
         will-change: transform;
     }
 
-    #progress-ring.indeterminate circle {
-        transition: none;
+    #processing-status:focus-visible {
+        outline: var(--focus-ring);
+        outline-offset: var(--focus-ring-offset);
     }
 
-    .completed #progress-ring {
-        opacity: 0;
+    #flask {
+        position: absolute;
+        inset: 3px;
+        width: 42px;
+        height: 42px;
+        overflow: visible;
+    }
+
+    .flask-outline {
+        fill: none;
+        stroke: var(--ink);
+        stroke-width: 2.5;
+    }
+
+    .liquid {
+        transition: transform 0.4s var(--ease-liquid);
+        will-change: transform;
+    }
+
+    .liquid-fill {
+        fill: var(--grape);
+        animation: wave-drift 2.6s linear infinite;
+        will-change: transform;
+    }
+
+    .completed .liquid-fill {
+        fill: var(--lime);
+    }
+
+    .slosh {
+        transform-origin: 21px 21px;
+    }
+
+    .slosh.sloshing {
+        animation: flask-slosh 1.7s ease-in-out infinite alternate;
+    }
+
+    @keyframes wave-drift {
+        from {
+            transform: translateX(0);
+        }
+        to {
+            transform: translateX(-42px);
+        }
+    }
+
+    @keyframes flask-slosh {
+        from {
+            transform: rotate(-7deg);
+        }
+        to {
+            transform: rotate(7deg);
+        }
+    }
+
+    .icon-holder {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1;
+    }
+
+    .icon-holder :global(svg) {
+        height: 20px;
+        width: 20px;
+        stroke: var(--ink);
+        stroke-width: 2.5px;
+        transition: stroke 0.2s;
+    }
+
+    .filling:not(.completed) .icon-holder :global(svg) {
+        stroke: var(--milk);
+        filter: drop-shadow(0 1px 0 var(--ink));
+    }
+
+    .completed .icon-holder :global(svg) {
+        stroke: var(--ink);
     }
 </style>

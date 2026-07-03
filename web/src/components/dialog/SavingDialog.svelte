@@ -181,6 +181,24 @@
         position: relative;
     }
 
+    /* each saving method is its own flavored droplet */
+    .action-buttons :global(.button) {
+        border: 2px solid var(--ink);
+        border-radius: var(--blob-b);
+    }
+
+    .action-buttons :global(#button-save-download) {
+        background: var(--grape-milk);
+    }
+
+    .action-buttons :global(#button-save-share) {
+        background: var(--tangerine-milk);
+    }
+
+    .action-buttons :global(#button-save-copy) {
+        background: var(--lime-milk);
+    }
+
     .body-text {
         font-size: 13px;
         font-weight: 500;

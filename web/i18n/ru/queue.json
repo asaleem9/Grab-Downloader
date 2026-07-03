@@ -4,7 +4,7 @@
     "state.running.remux": "ремуксирую",
     "state.retrying": "повторяю",
     "state.starting.encode": "начинаю транскодирование",
-    "title": "очередь обработки",
+    "title": "бак обработки",
     "state.starting": "начинаю",
     "state.starting.remux": "начинаю ремуксинг",
     "state.running.fetch": "скачиваю",

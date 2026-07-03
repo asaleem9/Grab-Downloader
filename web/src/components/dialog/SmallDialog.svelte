@@ -82,6 +82,7 @@
     .popup-title {
         color: var(--secondary);
         font-size: 19px;
+        font-weight: 800;
     }
 
     .popup-header,
@@ -98,8 +99,18 @@
         width: 50px;
     }
 
+    /* errors arrive as a splat: the icon sits in a coral blob */
+    .warn-red {
+        background: var(--splat-milk);
+        border: 2.5px solid var(--splat);
+        border-radius: 63% 37% 54% 46% / 46% 61% 39% 54%;
+        padding: 10px 14px;
+        margin-bottom: 4px;
+    }
+
     .warn-red :global(svg) {
-        stroke: var(--red);
+        stroke: var(--splat);
+        stroke-width: 2px;
     }
 
     .body-text {
