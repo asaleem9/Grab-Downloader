@@ -5,49 +5,71 @@
     import { registerCurtain, type CurtainOptions } from "../transitions";
 
     /*
-        the page-transition membrane: a grape blob that swells from
-        the middle of the content area until it swallows the screen,
-        then shrinks away over the new page. transform-only, so the
-        whole thing lives on the compositor.
+        the iris: an svg sheet with a circular hole punched through
+        it (even-odd fill). covering shrinks the hole until the
+        grape swallows the old page; revealing grows it again, so
+        the new page appears through the expanding circle.
     */
 
     let wrap: HTMLDivElement;
-    let blob: HTMLDivElement;
-
-    const BASE = 100; // blob's unscaled diameter in px
+    let sheet: SVGPathElement;
+    let svg: SVGSVGElement;
 
     onMount(() => {
         gsap.set(wrap, { visibility: "hidden" });
 
-        const coverScale = () => {
+        let w = 0;
+        let h = 0;
+
+        /* full rect minus a centered circle of radius r */
+        const draw = (r: number) => {
+            const cx = w / 2;
+            const cy = h / 2;
+            return (
+                `M0,0 H${w} V${h} H0 Z ` +
+                `M${cx - r},${cy} ` +
+                `a${r},${r} 0 1,0 ${r * 2},0 ` +
+                `a${r},${r} 0 1,0 ${-r * 2},0 Z`
+            );
+        };
+
+        const iris = { r: 0 };
+        const maxR = () => Math.hypot(w, h) / 2 + 8;
+
+        const apply = () => sheet.setAttribute("d", draw(iris.r));
+
+        const measure = () => {
             const rect = wrap.getBoundingClientRect();
-            /* enough to swallow the farthest corner, blob lumps included */
-            return (Math.hypot(rect.width, rect.height) / BASE) * 1.3;
+            w = rect.width;
+            h = rect.height;
+            svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
         };
 
         const cover = ({ variant = "full" }: CurtainOptions = {}) =>
             new Promise<void>((resolve) => {
-                gsap.killTweensOf([wrap, blob]);
+                gsap.killTweensOf(iris);
+                measure();
+
+                iris.r = maxR();
+                apply();
                 gsap.set(wrap, { visibility: "visible" });
-                gsap.set(blob, { scale: 0, opacity: 0.75, rotation: 0 });
-                gsap.to(blob, {
-                    scale: coverScale(),
-                    opacity: 1,
-                    rotation: 40,
-                    duration: variant === "pane" ? 0.3 : 0.38,
-                    ease: "power2.in",
+
+                gsap.to(iris, {
+                    r: 0,
+                    duration: variant === "pane" ? 0.4 : 0.55,
+                    ease: "power2.inOut",
+                    onUpdate: apply,
                     onComplete: resolve,
                 });
             });
 
         const reveal = () =>
             new Promise<void>((resolve) => {
-                gsap.to(blob, {
-                    scale: 0,
-                    opacity: 0.7,
-                    rotation: 90,
-                    duration: 0.45,
+                gsap.to(iris, {
+                    r: maxR(),
+                    duration: 0.75,
                     ease: "power2.inOut",
+                    onUpdate: apply,
                     onComplete: () => {
                         gsap.set(wrap, { visibility: "hidden" });
                         resolve();
@@ -60,7 +82,9 @@
 </script>
 
 <div class="curtain" bind:this={wrap} aria-hidden="true">
-    <div class="curtain-blob" bind:this={blob}></div>
+    <svg bind:this={svg} preserveAspectRatio="none">
+        <path bind:this={sheet} fill="var(--grape)" fill-rule="evenodd" />
+    </svg>
 </div>
 
 <style>
@@ -70,17 +94,11 @@
         z-index: 60;
         pointer-events: none;
         visibility: hidden;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
     }
 
-    .curtain-blob {
-        width: 100px;
-        height: 100px;
-        background: var(--grape);
-        border-radius: var(--blob-a);
-        will-change: transform;
+    .curtain svg {
+        width: 100%;
+        height: 100%;
+        display: block;
     }
 </style>
