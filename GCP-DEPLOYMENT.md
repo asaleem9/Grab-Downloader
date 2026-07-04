@@ -62,6 +62,36 @@ Cloud Run can't run a gluetun sidecar (no `/dev/net/tun`), so this means either
 an external residential proxy service (ongoing cost) or moving the API to a
 Compute Engine VM. The VM + Cloudflare WARP compose setup is below.
 
+## Services that require cookies / auth
+
+Most services work with no credentials. These are the exceptions — all are
+configured through the same `COOKIE_PATH` JSON file described in the YouTube
+cookie section above (one file, one key per service):
+
+```json
+{
+  "reddit": ["client_id=...; client_secret=...; refresh_token=..."],
+  "instagram": ["sessionid=...; ds_user_id=..."],
+  "youtube": ["...only if the env-var fix stops being enough..."]
+}
+```
+
+- **reddit — required for all reddit content.** Reddit now returns HTTP 403
+  ("log in to continue") on its unauthenticated `.json` endpoints from every
+  IP, so every reddit link fails with `error.api.fetch.fail` until an OAuth app
+  credential is configured. The extractor already switches to `oauth.reddit.com`
+  once the cookie exists — no code change needed. To set it up: create a Reddit
+  app (https://www.reddit.com/prefs/apps, type "script"), authenticate an account
+  against Reddit's OAuth2 API to get a `refresh_token`
+  (see https://github.com/reddit-archive/reddit/wiki/OAuth2), and put
+  `client_id`, `client_secret`, `refresh_token` in the `reddit` cookie entry.
+- **instagram — only for stories, private, or age-gated posts.** Public reels
+  and posts work with no cookies. Supply an `instagram` session cookie only if
+  you need the gated content.
+
+Mount the cookie file the same way as the YouTube secret
+(`--update-secrets=/cookies/cookies.json=... --update-env-vars=COOKIE_PATH=...`).
+
 ## Compute Engine + Cloudflare WARP via Gluetun (VM only)
 
 Cloudflare WARP (free) routes traffic through Cloudflare's network, which has better IP reputation than raw datacenter IPs.
