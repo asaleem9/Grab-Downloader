@@ -122,7 +122,8 @@ export default async function ({ ownerId, videoId, accessKey, quality, subtitleL
     if (!url) return { error: "fetch.fail" };
 
     const fileMetadata = {
-        title: video.title.trim(),
+        // clips have no title field, so guard against null
+        title: video.title?.trim() || "",
     }
 
     let subtitles;

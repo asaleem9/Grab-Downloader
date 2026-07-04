@@ -1,45 +1,79 @@
 import { genericUserAgent } from "../../config.js";
+import { argon2id } from "hash-wasm";
 import crypto from "node:crypto";
 
-const solveGuard = async () => {
-    const countLeadingZeros = (buffer) => {
-        let count = 0;
-        for (const b of buffer) {
-            if (b == 0) {
-                count += 8;
-            } else {
-                count += Math.clz32(b) - 24;
-                break;
-            }
+const countLeadingZeros = (buffer) => {
+    let count = 0;
+    for (const b of buffer) {
+        if (b == 0) {
+            count += 8;
+        } else {
+            count += Math.clz32(b) - 24;
+            break;
         }
-
-        return count;
     }
-    const json = await fetch("https://www.newgrounds.com/_guard/api/v1/challenge", {
-        headers: {
-            "User-Agent": genericUserAgent,
-            "X-Requested-With": "XMLHttpRequest"
+
+    return count;
+}
+
+// newgrounds' anti-bot guard (NG Guard) upgraded its proof-of-work from
+// sha-256 to argon2id. the password is the decoded payload bytes + ":" +
+// nonce, the salt is 8 zero bytes, and the target is `bits` leading zero
+// bits of the argon2id hash - matching newgrounds' own guard client.
+const solveArgon2id = async ({ payload, bits, params }) => {
+    const decoded = Buffer.from(payload, "base64url");
+    const colon = Buffer.from(":");
+    const salt = new Uint8Array(8);
+
+    for (let nonce = 0; true; nonce++) {
+        const password = Buffer.concat([decoded, colon, Buffer.from(nonce.toString())]);
+        const hash = await argon2id({
+            password,
+            salt,
+            parallelism: params.parallelism,
+            iterations: params.iterations,
+            memorySize: params.memorySize,
+            hashLength: params.hashLength,
+            outputType: "binary",
+        });
+        if (countLeadingZeros(hash) >= bits) {
+            return nonce;
         }
-    }).then(r => r.json());
+    }
+}
 
-    const { payload, sig, bits } = json;
-
+// legacy sha-256 proof-of-work, kept as a fallback if an older
+// challenge is ever served
+const solveSha256 = ({ payload, bits }) => {
     const challenge = Buffer.from(payload, "base64");
     const workingBuffer = Buffer.alloc(challenge.length + 20 + 1);
     challenge.copy(workingBuffer, 0);
     Buffer.from(":", "utf-8").copy(workingBuffer, challenge.length);
 
-    let nonce;
     for (let i = 0; true; i++) {
         const encodedNum = Buffer.from(i.toString(), "utf-8");
         workingBuffer.set(encodedNum, challenge.length + 1);
 
         const sha = crypto.hash("SHA-256", workingBuffer.subarray(0, challenge.length + 1 + encodedNum.length), "buffer");
         if (countLeadingZeros(sha) >= bits) {
-            nonce = i;
-            break;
+            return i;
         }
     }
+}
+
+const solveGuard = async () => {
+    const challenge = await fetch("https://www.newgrounds.com/_guard/api/v1/challenge", {
+        headers: {
+            "User-Agent": genericUserAgent,
+            "X-Requested-With": "XMLHttpRequest"
+        }
+    }).then(r => r.json());
+
+    const { payload, sig, bits, algo, params } = challenge;
+
+    const nonce = algo === "argon2id"
+        ? await solveArgon2id({ payload, bits, params })
+        : solveSha256({ payload, bits });
 
     const verifyResponse = await fetch("https://www.newgrounds.com/_guard/api/v1/verify", {
         headers: {
@@ -53,7 +87,9 @@ const solveGuard = async () => {
             nonce: nonce.toString(),
             payload,
             sig,
-            demo: false
+            demo: false,
+            algo,
+            params,
         })
     }).then(r => r.json());
 

@@ -17,38 +17,64 @@ function extractBestQuality(dashData) {
     return [ bestVideo, bestAudio ];
 }
 
+// bilibili no longer inlines window.__playinfo__ in the page html, so
+// we go through the public web api instead: /view gives us the cid for
+// the requested part, /playurl gives us the DASH streams.
+const comApiHeaders = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0 Safari/537.36",
+    referer: "https://www.bilibili.com/",
+};
+
 async function com_download(id, partId) {
-    const url = new URL(`https://bilibili.com/video/${id}`);
-
-    if (partId) {
-        url.searchParams.set('p', partId);
-    }
-
-    const html = await fetch(url, {
-        headers: {
-            "user-agent": "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)",
-        }
-    })
-    .then(r => r.text())
+    const viewResponse = await fetch(
+        `https://api.bilibili.com/x/web-interface/view?bvid=${id}`,
+        { headers: comApiHeaders }
+    )
+    .then(a => a.json())
     .catch(() => {});
 
-    if (!html) {
-        return { error: "fetch.fail" }
-    }
-
-    if (!(html.includes('<script>window.__playinfo__=') && html.includes('"video_codecid"'))) {
+    if (viewResponse?.code !== 0 || !viewResponse.data) {
         return { error: "fetch.empty" };
     }
 
-    const streamData = JSON.parse(
-        html.split('<script>window.__playinfo__=')[1].split('</script>')[0]
-    );
+    const info = viewResponse.data;
 
-    if (streamData.data.timelength > env.durationLimit * 1000) {
+    // partId is the 1-indexed `p` query param; default to the primary page
+    let cid = info.cid;
+    let duration = info.duration;
+
+    if (partId && Array.isArray(info.pages)) {
+        const page = info.pages.find(p => p.page === Number(partId));
+        if (page) {
+            cid = page.cid;
+            duration = page.duration;
+        }
+    }
+
+    if (!cid) {
+        return { error: "fetch.empty" };
+    }
+
+    if (duration > env.durationLimit) {
         return { error: "content.too_long" };
     }
 
-    const [ video, audio ] = extractBestQuality(streamData.data.dash);
+    const playUrl = new URL('https://api.bilibili.com/x/player/playurl');
+    playUrl.searchParams.set('bvid', id);
+    playUrl.searchParams.set('cid', cid);
+    playUrl.searchParams.set('qn', '80');
+    playUrl.searchParams.set('fnval', '4048');
+    playUrl.searchParams.set('fourk', '1');
+
+    const playResponse = await fetch(playUrl, { headers: comApiHeaders })
+        .then(a => a.json())
+        .catch(() => {});
+
+    if (playResponse?.code !== 0 || !playResponse.data?.dash) {
+        return { error: "fetch.empty" };
+    }
+
+    const [ video, audio ] = extractBestQuality(playResponse.data.dash);
     if (!video || !audio) {
         return { error: "fetch.empty" };
     }
