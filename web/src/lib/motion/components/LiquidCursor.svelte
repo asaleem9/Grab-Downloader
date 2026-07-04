@@ -96,34 +96,101 @@
         window.addEventListener("scroll", rectRefresh, { capture: true, passive: true });
         window.addEventListener("resize", rectRefresh);
 
+        /*
+            state application: every tween overwrites its own
+            properties, and states are deduped - pointerover fires on
+            every element boundary, so without both, fast mouse travel
+            stacks dozens of fighting tweens and the cursor "sticks"
+            mid-shape.
+        */
+        let currentState: CursorState = "default";
+        let pressed = false;
+
+        const dotShape = (state: CursorState) => {
+            switch (state) {
+                case "hover":
+                    return { scaleX: 0.8, scaleY: 0.8 };
+                case "text":
+                    return { scaleX: 0.32, scaleY: 2.2 };
+                case "drag":
+                    return { scaleX: 1.7, scaleY: 0.9 };
+                default:
+                    return { scaleX: 1, scaleY: 1 };
+            }
+        };
+
+        const applyState = (state: CursorState) => {
+            if (state === "hidden") {
+                gsap.to(root, { opacity: 0, duration: 0.2, overwrite: "auto" });
+                return;
+            }
+
+            gsap.to(root, { opacity: seen ? 1 : 0, duration: 0.2, overwrite: "auto" });
+
+            if (state === "hover") {
+                gsap.to(ring, {
+                    scale: 1,
+                    opacity: 1,
+                    duration: 0.25,
+                    ease: "back.out(2)",
+                    overwrite: "auto",
+                });
+            } else {
+                gsap.to(ring, { scale: 0, opacity: 0, duration: 0.2, overwrite: "auto" });
+            }
+
+            if (!pressed) {
+                gsap.to(dot, {
+                    ...dotShape(state),
+                    duration: 0.25,
+                    ease: "back.out(1.5)",
+                    overwrite: "auto",
+                });
+            }
+
+            gsap.to([follower1, follower2], {
+                opacity: state === "default" ? 1 : 0,
+                duration: 0.15,
+                overwrite: "auto",
+            });
+        };
+
         /* delegated cursor-state detection */
         const over = (e: PointerEvent) => {
             if (!(e.target instanceof Element)) return;
 
             const tagged = e.target.closest<HTMLElement>("[data-cursor]");
+            let next: CursorState;
+
             if (tagged) {
-                const value = tagged.dataset.cursor;
-                if (value === "native") {
-                    gsap.to(root, { opacity: 0, duration: 0.15 });
-                    return;
-                }
-                gsap.to(root, { opacity: 1, duration: 0.15 });
-                cursorState.set(value as CursorState);
-                return;
+                next = tagged.dataset.cursor === "native"
+                    ? "hidden"
+                    : (tagged.dataset.cursor as CursorState);
+            } else if (e.target.closest(TEXTUAL)) {
+                next = "text";
+            } else if (e.target.closest(INTERACTIVE)) {
+                next = "hover";
+            } else {
+                next = "default";
             }
 
-            gsap.to(root, { opacity: 1, duration: 0.15 });
-            if (e.target.closest(TEXTUAL)) cursorState.set("text");
-            else if (e.target.closest(INTERACTIVE)) cursorState.set("hover");
-            else cursorState.set("default");
+            cursorState.set(next);
         };
 
         const down = () => {
-            gsap.to(dot, { scale: 0.65, duration: 0.1, overwrite: "auto" });
+            pressed = true;
+            const shape = dotShape(currentState);
+            gsap.to(dot, {
+                scaleX: shape.scaleX * 0.7,
+                scaleY: shape.scaleY * 0.7,
+                duration: 0.1,
+                overwrite: "auto",
+            });
         };
         const up = () => {
+            pressed = false;
             gsap.to(dot, {
-                scale: 1,
+                ...dotShape(currentState),
                 duration: 0.5,
                 ease: "elastic.out(1.2, 0.4)",
                 overwrite: "auto",
@@ -147,33 +214,12 @@
         document.documentElement.addEventListener("pointerenter", enter);
         window.addEventListener("touchstart", touch, { passive: true, once: true });
 
-        /* react to cursor state */
+        /* react to cursor state changes only */
         const unsubscribe = cursorState.subscribe((state) => {
             if (killed) return;
-            switch (state) {
-                case "hover":
-                    gsap.to(ring, { scale: 1, opacity: 1, duration: 0.25, ease: "back.out(2)" });
-                    gsap.to(dot, { scaleX: 0.8, scaleY: 0.8, duration: 0.25, overwrite: "auto" });
-                    gsap.to([follower1, follower2], { opacity: 0, duration: 0.15 });
-                    break;
-                case "text":
-                    gsap.to(ring, { scale: 0, opacity: 0, duration: 0.2 });
-                    gsap.to(dot, { scaleX: 0.32, scaleY: 2.2, duration: 0.2, overwrite: "auto" });
-                    gsap.to([follower1, follower2], { opacity: 0, duration: 0.15 });
-                    break;
-                case "drag":
-                    gsap.to(ring, { scale: 0, opacity: 0, duration: 0.2 });
-                    gsap.to(dot, { scaleX: 1.7, scaleY: 0.9, duration: 0.2, overwrite: "auto" });
-                    break;
-                case "hidden":
-                    gsap.to(root, { opacity: 0, duration: 0.2 });
-                    break;
-                default:
-                    gsap.to(root, { opacity: seen ? 1 : 0, duration: 0.2 });
-                    gsap.to(ring, { scale: 0, opacity: 0, duration: 0.2 });
-                    gsap.to(dot, { scaleX: 1, scaleY: 1, duration: 0.3, ease: "back.out(1.5)", overwrite: "auto" });
-                    gsap.to([follower1, follower2], { opacity: 1, duration: 0.15 });
-            }
+            if (state === currentState) return;
+            currentState = state;
+            applyState(state);
         });
 
         return () => {

@@ -24,9 +24,6 @@ export function registerCurtain(c: Curtain) {
     };
 }
 
-/* tab order drives wipe direction: save -> settings -> about */
-const SECTION_ORDER = ["", "settings", "about"];
-
 /*
     liquid page transitions. must be called during root layout
     component init (onNavigate requires component context). the
@@ -45,27 +42,12 @@ export function initPageTransitions() {
         const to = navigation.to?.url.pathname;
         if (!from || !to || from === to) return;
 
-        const fromSection = from.split("/")[1];
-        const toSection = to.split("/")[1];
-
-        /* subnav moves (settings/a -> settings/b) get a light
-           vertical pane sweep; section changes wipe horizontally
-           in tab order */
-        let options: CurtainOptions;
-
-        if (fromSection === toSection) {
-            options = { variant: "pane", direction: "down" };
-        } else {
-            const fromIndex = SECTION_ORDER.indexOf(fromSection);
-            const toIndex = SECTION_ORDER.indexOf(toSection);
-            options = {
-                variant: "full",
-                direction: toIndex >= fromIndex ? "right" : "left",
-            };
-        }
+        /* subnav moves (settings/a -> settings/b) get the quicker pulse */
+        const variant =
+            from.split("/")[1] === to.split("/")[1] ? "pane" : "full";
 
         return new Promise<void>((resolve) => {
-            curtain!.cover(options).then(resolve);
+            curtain!.cover({ variant }).then(resolve);
             navigation.complete.then(() => curtain?.reveal()).catch(() => {});
         });
     });
