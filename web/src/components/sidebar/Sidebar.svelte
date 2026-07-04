@@ -207,6 +207,13 @@
             overflow-y: visible;
             overflow-x: scroll;
             padding: 0;
+            /*
+                overflow-x: scroll forces overflow-y to compute to auto,
+                which clips the active droplet's -10px pop-above. carve
+                that zone into the scrollport instead of losing it.
+            */
+            padding-top: 10px;
+            margin-top: -10px;
             height: fit-content;
             justify-content: center;
             gap: 12px;
