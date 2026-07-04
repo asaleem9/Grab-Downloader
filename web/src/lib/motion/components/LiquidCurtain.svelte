@@ -45,29 +45,28 @@
             svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
         };
 
+        let lastVariant: "full" | "pane" = "full";
+
+        /* no closing animation: the sheet just appears, the page
+           swaps behind it, and the single transition is the circle
+           opening over the new content */
         const cover = ({ variant = "full" }: CurtainOptions = {}) =>
             new Promise<void>((resolve) => {
                 gsap.killTweensOf(iris);
                 measure();
+                lastVariant = variant;
 
-                iris.r = maxR();
+                iris.r = 0;
                 apply();
                 gsap.set(wrap, { visibility: "visible" });
-
-                gsap.to(iris, {
-                    r: 0,
-                    duration: variant === "pane" ? 0.4 : 0.55,
-                    ease: "power2.inOut",
-                    onUpdate: apply,
-                    onComplete: resolve,
-                });
+                resolve();
             });
 
         const reveal = () =>
             new Promise<void>((resolve) => {
                 gsap.to(iris, {
                     r: maxR(),
-                    duration: 0.75,
+                    duration: lastVariant === "pane" ? 0.55 : 0.8,
                     ease: "power2.inOut",
                     onUpdate: apply,
                     onComplete: () => {

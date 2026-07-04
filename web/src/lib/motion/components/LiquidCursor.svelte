@@ -20,6 +20,7 @@
     const TEXTUAL = 'input, textarea, [contenteditable="true"]';
 
     let root: HTMLDivElement = $state()!;
+    let gooBox: HTMLDivElement = $state()!;
     let dot: HTMLDivElement = $state()!;
     let follower1: HTMLDivElement = $state()!;
     let follower2: HTMLDivElement = $state()!;
@@ -36,20 +37,29 @@
 
         document.documentElement.classList.add("liquid-cursor");
 
-        /* the dot tracks nearly 1:1; only the tail lags for the goo */
-        const q = {
-            dot: [gsap.quickTo(dot, "x", { duration: 0.035, ease: "power2.out" }),
-                  gsap.quickTo(dot, "y", { duration: 0.035, ease: "power2.out" })],
-            f1: [gsap.quickTo(follower1, "x", { duration: 0.1, ease: "power2.out" }),
-                 gsap.quickTo(follower1, "y", { duration: 0.1, ease: "power2.out" })],
-            f2: [gsap.quickTo(follower2, "x", { duration: 0.17, ease: "power2.out" }),
-                 gsap.quickTo(follower2, "y", { duration: 0.17, ease: "power2.out" })],
-            ring: [gsap.quickTo(ring, "x", { duration: 0.12, ease: "power2.out" }),
-                   gsap.quickTo(ring, "y", { duration: 0.12, ease: "power2.out" })],
-        };
+        /*
+            perf-critical: the goo filter must never cover a large
+            area (it re-rasterizes every frame). so the filtered box
+            is a small square that travels with the cursor, and the
+            tail dots are positioned locally inside it. everything
+            moves in the one shared ticker below.
+        */
+        const setBox = gsap.quickSetter(gooBox, "css") as (v: object) => void;
+        const setF1 = gsap.quickSetter(follower1, "css") as (v: object) => void;
+        const setF2 = gsap.quickSetter(follower2, "css") as (v: object) => void;
+        const qRing = [
+            gsap.quickTo(ring, "x", { duration: 0.12, ease: "power2.out" }),
+            gsap.quickTo(ring, "y", { duration: 0.12, ease: "power2.out" }),
+        ];
 
         let px = -100;
         let py = -100;
+        /* virtual global positions: dot leads, tail lerps behind */
+        const pos = {
+            dot: { x: -100, y: -100 },
+            f1: { x: -100, y: -100 },
+            f2: { x: -100, y: -100 },
+        };
         let seen = false;
 
         const move = (e: PointerEvent) => {
@@ -57,18 +67,36 @@
             py = e.clientY;
             if (!seen) {
                 seen = true;
-                gsap.set([dot, follower1, follower2, ring], { x: px, y: py });
+                pos.dot.x = pos.f1.x = pos.f2.x = px;
+                pos.dot.y = pos.f1.y = pos.f2.y = py;
+                gsap.set(ring, { x: px, y: py });
                 gsap.to(root, { opacity: 1, duration: 0.2 });
             }
-            q.dot[0](px); q.dot[1](py);
-            q.f1[0](px); q.f1[1](py);
-            q.f2[0](px); q.f2[1](py);
-            q.ring[0](px); q.ring[1](py);
+            qRing[0](px);
+            qRing[1](py);
         };
 
-        /* single shared tick: magnetic pull for the 8 nearest targets */
-        const tick = () => {
+        /* single shared tick: cursor movement + magnetic pull */
+        const tick = (_t: number, dt: number) => {
             if (!seen) return;
+
+            /* frame-rate independent lerp factors */
+            const kDot = 1 - Math.exp(-dt * 0.045);
+            const kF1 = 1 - Math.exp(-dt * 0.016);
+            const kF2 = 1 - Math.exp(-dt * 0.009);
+
+            pos.dot.x += (px - pos.dot.x) * kDot;
+            pos.dot.y += (py - pos.dot.y) * kDot;
+            pos.f1.x += (pos.dot.x - pos.f1.x) * kF1;
+            pos.f1.y += (pos.dot.y - pos.f1.y) * kF1;
+            pos.f2.x += (pos.f1.x - pos.f2.x) * kF2;
+            pos.f2.y += (pos.f1.y - pos.f2.y) * kF2;
+
+            /* the goo box rides the dot; the tail renders locally */
+            setBox({ x: pos.dot.x, y: pos.dot.y });
+            setF1({ x: pos.f1.x - pos.dot.x, y: pos.f1.y - pos.dot.y });
+            setF2({ x: pos.f2.x - pos.dot.x, y: pos.f2.y - pos.dot.y });
+
             let driven = 0;
             for (const entry of magneticRegistry.values()) {
                 if (!entry.rect) entry.rect = entry.el.getBoundingClientRect();
@@ -242,7 +270,7 @@
 
 {#if !killed}
     <div class="cursor-root" bind:this={root} aria-hidden="true">
-        <div class="cursor-goo">
+        <div class="cursor-goo" bind:this={gooBox}>
             <div class="cursor-dot" bind:this={dot}></div>
             <div class="cursor-follower f1" bind:this={follower1}></div>
             <div class="cursor-follower f2" bind:this={follower2}></div>
@@ -260,19 +288,32 @@
         opacity: 0;
     }
 
+    /* small filtered region that rides the pointer - a goo filter
+       over anything bigger re-rasterizes the world every frame */
     .cursor-goo {
         position: absolute;
-        inset: 0;
+        top: -80px;
+        left: -80px;
+        width: 160px;
+        height: 160px;
         filter: url(#goo-cursor);
+        will-change: transform;
     }
 
     .cursor-dot,
-    .cursor-follower,
+    .cursor-follower {
+        position: absolute;
+        top: 80px;
+        left: 80px;
+        border-radius: 50%;
+        will-change: transform;
+    }
+
     .cursor-ring {
         position: absolute;
         top: 0;
         left: 0;
-        border-radius: 50%;
+        border-radius: var(--blob-a);
         will-change: transform;
     }
 
@@ -304,7 +345,6 @@
         height: 26px;
         margin: -13px 0 0 -13px;
         border: 2.5px solid var(--grape);
-        border-radius: var(--blob-a);
         transform: scale(0);
         opacity: 0;
     }
