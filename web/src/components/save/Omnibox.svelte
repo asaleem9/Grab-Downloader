@@ -329,7 +329,8 @@
     #omnibox {
         display: flex;
         flex-direction: column;
-        max-width: 640px;
+        /* grows with the window instead of pinning at 640 */
+        max-width: clamp(640px, 46vw, 900px);
         width: 100%;
         gap: 14px;
         position: relative;
@@ -362,7 +363,7 @@
         border: 2.5px solid var(--ink);
         border-radius: 40px 38px 44px 36px / 38px 46px 38px 44px;
 
-        font-size: 14px;
+        font-size: clamp(14px, 1vw, 16.5px);
         transition: border-color 0.25s;
         will-change: border-radius;
     }

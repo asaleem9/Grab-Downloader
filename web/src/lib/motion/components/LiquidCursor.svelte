@@ -36,15 +36,16 @@
 
         document.documentElement.classList.add("liquid-cursor");
 
+        /* the dot tracks nearly 1:1; only the tail lags for the goo */
         const q = {
-            dot: [gsap.quickTo(dot, "x", { duration: 0.08, ease: "power3" }),
-                  gsap.quickTo(dot, "y", { duration: 0.08, ease: "power3" })],
-            f1: [gsap.quickTo(follower1, "x", { duration: 0.18, ease: "power3" }),
-                 gsap.quickTo(follower1, "y", { duration: 0.18, ease: "power3" })],
-            f2: [gsap.quickTo(follower2, "x", { duration: 0.3, ease: "power3" }),
-                 gsap.quickTo(follower2, "y", { duration: 0.3, ease: "power3" })],
-            ring: [gsap.quickTo(ring, "x", { duration: 0.35, ease: "power3" }),
-                   gsap.quickTo(ring, "y", { duration: 0.35, ease: "power3" })],
+            dot: [gsap.quickTo(dot, "x", { duration: 0.035, ease: "power2.out" }),
+                  gsap.quickTo(dot, "y", { duration: 0.035, ease: "power2.out" })],
+            f1: [gsap.quickTo(follower1, "x", { duration: 0.1, ease: "power2.out" }),
+                 gsap.quickTo(follower1, "y", { duration: 0.1, ease: "power2.out" })],
+            f2: [gsap.quickTo(follower2, "x", { duration: 0.17, ease: "power2.out" }),
+                 gsap.quickTo(follower2, "y", { duration: 0.17, ease: "power2.out" })],
+            ring: [gsap.quickTo(ring, "x", { duration: 0.12, ease: "power2.out" }),
+                   gsap.quickTo(ring, "y", { duration: 0.12, ease: "power2.out" })],
         };
 
         let px = -100;

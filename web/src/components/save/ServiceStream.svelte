@@ -70,7 +70,7 @@
         align-items: center;
         gap: 7px;
         width: 100%;
-        max-width: 640px;
+        max-width: clamp(640px, 52vw, 1000px);
         overflow: hidden;
     }
 

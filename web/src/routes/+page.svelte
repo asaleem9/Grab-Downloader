@@ -9,7 +9,13 @@
     import Omnibox from "$components/save/Omnibox.svelte";
     import ServiceStream from "$components/save/ServiceStream.svelte";
 
-    const grabberSize = browser && window.innerWidth <= 535 ? 130 : 180;
+    /* the scene scales with the window */
+    let innerWidth = $state(browser ? window.innerWidth : 1200);
+    const grabberSize = $derived(
+        innerWidth <= 535
+            ? 130
+            : Math.round(Math.min(250, Math.max(170, innerWidth * 0.13)))
+    );
 
     onMount(() => {
         /* the entrance: once per session, skipped for reduced motion
@@ -67,6 +73,8 @@
         return () => tl.kill();
     });
 </script>
+
+<svelte:window bind:innerWidth />
 
 <svelte:head>
     <title>{$t("general.cobalt")}</title>
@@ -126,7 +134,7 @@
     }
 
     #tagline {
-        font-size: 34px;
+        font-size: clamp(30px, 2.6vw, 48px);
         font-weight: 800;
         letter-spacing: -0.5px;
         color: var(--ink);
