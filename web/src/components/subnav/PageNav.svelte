@@ -15,7 +15,15 @@
     export let contentPadding = false;
     export let wideContent = false;
 
-    let screenWidth: number;
+    /*
+        seed from the real width: the svelte:window binding only fires
+        after first render, and an undefined width reads as desktop,
+        firing the subnav redirect goto on phones. that same-url goto
+        aborts the in-flight navigation (and stranded the page curtain).
+    */
+    let screenWidth: number | undefined = browser
+        ? window.innerWidth
+        : undefined;
 
     $: currentPageTitle = $page.url.pathname.split("/").pop();
     $: stringPageTitle =
@@ -23,7 +31,7 @@
             ? ` / ${$t(`${pageName}.page.${currentPageTitle}`)}`
             : "";
 
-    $: isMobile = screenWidth <= 750;
+    $: isMobile = screenWidth !== undefined && screenWidth <= 750;
     $: isHome = $page.url.pathname === homeNavPath;
     $: {
         if (browser && !isMobile && isHome) {

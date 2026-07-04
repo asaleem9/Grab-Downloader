@@ -48,7 +48,14 @@ export function initPageTransitions() {
 
         return new Promise<void>((resolve) => {
             curtain!.cover({ variant }).then(resolve);
-            navigation.complete.then(() => curtain?.reveal()).catch(() => {});
+            /*
+                reveal even if the navigation is aborted (complete
+                rejects) - a superseding navigation re-covers on its
+                own, and a stranded sheet is never acceptable
+            */
+            navigation.complete
+                .catch(() => {})
+                .then(() => curtain?.reveal());
         });
     });
 }
