@@ -233,11 +233,11 @@
             }
         });
 
-        /* act out download states on the vessel itself */
+        /* act out download states on the vessel itself. the input
+           clear is functional and always happens - only the
+           theatrics are gated on motion */
         const unsubState = downloadButtonState.subscribe((state) => {
-            if (!vesselRow || !motionOK()) return;
-
-            if (state === "error") {
+            if (state === "error" && vesselRow && motionOK()) {
                 gsap.fromTo(
                     vesselRow,
                     { x: 0 },
@@ -246,7 +246,7 @@
             }
 
             if (state === "done") {
-                flyChars("grab");
+                if (vesselRow && motionOK()) flyChars("grab");
                 $link = "";
             }
         });
