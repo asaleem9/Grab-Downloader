@@ -25,8 +25,8 @@
     "homepage": "https://grab.tools/",
     "devDependencies": {
         "@eslint/js": "^9.39.2",
+        "@fontsource-variable/baloo-2": "^5.2.7",
         "@fontsource/ibm-plex-mono": "^5.2.7",
-        "@fontsource/redaction-10": "^5.2.5",
         "@imput/libav.js-encode-cli": "6.8.7",
         "@imput/libav.js-remux-cli": "^6.8.7",
         "@imput/version-info": "workspace:^",
@@ -41,6 +41,7 @@
         "dotenv": "^17.2.3",
         "eslint": "^9.39.2",
         "glob": "^13.0.0",
+        "gsap": "^3.15.0",
         "mdsvex": "^0.12.6",
         "mime": "^4.1.0",
         "svelte": "^5.46.0",

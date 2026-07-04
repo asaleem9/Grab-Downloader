@@ -51,7 +51,9 @@
             {#if items}
                 {#each items as item, i}
                     {#if item?.url}
-                        <PickerItem {item} number={i + 1} />
+                        <div class="picker-blob blob-{i % 3}" style="animation-delay: {Math.min(i * 40, 400)}ms">
+                            <PickerItem {item} number={i + 1} />
+                        </div>
                     {/if}
                 {/each}
             {/if}
@@ -125,6 +127,43 @@
     :global(.picker-item) {
         width: var(--picker-item-size);
         height: var(--picker-item-size);
+    }
+
+    /* every item is an organic sticker with a rotating shape seed */
+    .picker-blob {
+        overflow: hidden;
+        border: 2.5px solid var(--ink);
+        animation: picker-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+        transition: transform 0.3s var(--ease-liquid);
+    }
+
+    .picker-blob.blob-0 {
+        border-radius: var(--blob-a);
+    }
+
+    .picker-blob.blob-1 {
+        border-radius: var(--blob-b);
+    }
+
+    .picker-blob.blob-2 {
+        border-radius: var(--blob-c);
+    }
+
+    @media (hover: hover) {
+        .picker-blob:hover {
+            transform: scale(1.05) rotate(-1.5deg);
+        }
+    }
+
+    @keyframes picker-pop {
+        from {
+            transform: scale(0.4);
+            opacity: 0;
+        }
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
     }
 
     @media screen and (max-width: 535px) {

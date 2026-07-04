@@ -16,15 +16,17 @@
 
 <style>
     #clear-button {
-        padding: 3px;
-        border-radius: 100%;
+        padding: 4px;
+        border-radius: var(--blob-b);
+        background: var(--milk-deep);
+        border: 2px solid var(--ink);
     }
 
     #clear-button :global(svg) {
-        width: 16px;
-        height: 16px;
-        stroke-width: 2px;
-        stroke: var(--secondary);
+        width: 14px;
+        height: 14px;
+        stroke-width: 2.5px;
+        stroke: var(--ink);
         will-change: transform;
     }
 </style>

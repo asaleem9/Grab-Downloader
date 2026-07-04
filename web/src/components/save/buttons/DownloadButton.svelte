@@ -1,9 +1,11 @@
 <script lang="ts">
-    import { onDestroy } from "svelte";
+    import { onDestroy, onMount } from "svelte";
     import { t } from "$lib/i18n/translations";
     import { hapticSwitch } from "$lib/haptics";
     import { savingHandler } from "$lib/api/saving-handler";
     import { downloadButtonState } from "$lib/state/omnibox";
+
+    import { gsap, EASE, magnetic, squish, motionOK } from "$lib/motion";
 
     import type { CobaltDownloadButtonState } from "$lib/types/omnibox";
 
@@ -11,23 +13,29 @@
     export let disabled = false;
     export let loading = false;
 
-    $: buttonText = ">>";
-    $: buttonAltText = $t("a11y.save.download");
+    let button: HTMLButtonElement;
+    let currentState: CobaltDownloadButtonState = "idle";
 
-    type DownloadButtonState = "idle" | "think" | "check" | "done" | "error";
+    $: buttonAltText = $t("a11y.save.download");
+    $: label = $t("save.grab");
+
+    let radiusLoop: gsap.core.Tween | null = null;
 
     const unsubscribe = downloadButtonState.subscribe(
         (state: CobaltDownloadButtonState) => {
+            currentState = state;
             disabled = state !== "idle";
             loading = state === "think" || state === "check";
 
-            buttonText = {
-                idle: ">>",
-                think: "...",
-                check: "..?",
-                done: ">>>",
-                error: "!!",
-            }[state];
+            label = $t(
+                {
+                    idle: "save.grab",
+                    think: "save.state.think",
+                    check: "save.state.check",
+                    done: "save.state.done",
+                    error: "save.state.error",
+                }[state]
+            );
 
             buttonAltText = $t(
                 {
@@ -39,100 +47,142 @@
                 }[state]
             );
 
+            if (button && motionOK()) {
+                switch (state) {
+                    case "think":
+                        gsap.to(button, {
+                            scaleY: 0.92,
+                            scaleX: 1.05,
+                            duration: 0.5,
+                            ease: EASE.jelly,
+                        });
+                        break;
+                    case "done":
+                        gsap.to(button, {
+                            scale: 1.12,
+                            duration: 0.4,
+                            ease: EASE.pop,
+                        });
+                        gsap.to(button, { scale: 1, delay: 0.5, duration: 0.4 });
+                        break;
+                    case "error":
+                        gsap.fromTo(
+                            button,
+                            { x: 0 },
+                            { x: 7, duration: 0.6, ease: EASE.wobble }
+                        );
+                        break;
+                    default:
+                        gsap.to(button, {
+                            scale: 1,
+                            scaleX: 1,
+                            scaleY: 1,
+                            x: 0,
+                            duration: 0.4,
+                            ease: "power2.out",
+                        });
+                }
+            }
+
             // states that don't wait for anything, and thus can
             // transition back to idle after some period of time.
-            const final: DownloadButtonState[] = ["done", "error"];
+            const final: CobaltDownloadButtonState[] = ["done", "error"];
             if (final.includes(state)) {
                 setTimeout(() => downloadButtonState.set("idle"), 1500);
             }
         }
     );
 
+    onMount(() => {
+        /* idle breath: the blob outline slowly cycles between seeds */
+        radiusLoop = gsap.to(button, {
+            borderRadius: "45% 55% 48% 52% / 55% 44% 56% 45%",
+            duration: 3.2,
+            yoyo: true,
+            repeat: -1,
+            ease: "sine.inOut",
+        });
+
+        return () => radiusLoop?.kill();
+    });
+
     onDestroy(() => unsubscribe());
 </script>
 
 <button
-    id="download-button"
+    id="grab-button"
+    class="state-{currentState}"
+    bind:this={button}
     {disabled}
+    use:squish={{ intensity: 1.4 }}
+    use:magnetic={{ strength: 0.25, radius: 70 }}
     on:click={() => {
         hapticSwitch();
         savingHandler({ url });
     }}
     aria-label={buttonAltText}
 >
-    <span id="download-state">{buttonText}</span>
+    <span id="grab-label">{label}</span>
 </button>
 
 <style>
-    #download-button {
+    #grab-button {
         display: flex;
         align-items: center;
         justify-content: center;
 
-        height: 100%;
-        min-width: 48px;
-        width: 48px;
+        min-width: 104px;
+        padding: 12px 20px;
+        margin-left: -14px;
 
-        border-radius: 0;
-
-        /* visually align the button, +1.5px because of inset box-shadow on parent */
-        padding: 0 13.5px 0 12px;
-
-        background: none;
+        border-radius: var(--blob-a);
+        background: var(--grape);
+        color: var(--white);
         box-shadow: none;
-        transform: none;
 
-        border-left: 1.5px var(--input-border) solid;
-        border-top-right-radius: var(--border-radius);
-        border-bottom-right-radius: var(--border-radius);
+        will-change: transform, border-radius;
     }
 
-    #download-button:dir(rtl) {
-        border-left: 0;
-        border-top-right-radius: 0;
-        border-bottom-right-radius: 0;
-
-        border-right: 1.5px var(--input-border) solid;
-        border-top-left-radius: var(--border-radius);
-        border-bottom-left-radius: var(--border-radius);
-
-        direction: ltr;
-        padding: 0 12px 0 15px;
+    #grab-button:dir(rtl) {
+        margin-left: 0;
+        margin-right: -14px;
     }
 
-    #download-state {
-        font-size: 24px;
-        font-family: "Noto Sans Mono", "IBM Plex Mono", monospace;
-        font-weight: 400;
-
-        text-align: center;
-        text-indent: -5px;
-        letter-spacing: -5.3px;
-
-        margin-bottom: 2px;
-    }
-
-    #download-button:disabled {
-        cursor: unset;
-        color: var(--gray);
-    }
-
-    :global(#input-container.focused) #download-button {
-        border-left: 2px var(--secondary) solid;
-    }
-
-    :global(#input-container.focused) #download-button:dir(rtl) {
-        border-left: 0;
-        border-right: 2px var(--secondary) solid;
+    #grab-label {
+        font-family: var(--font-liquid);
+        font-size: 17px;
+        font-weight: 800;
+        letter-spacing: 0.3px;
+        line-height: 1;
+        pointer-events: none;
     }
 
     @media (hover: hover) {
-        #download-button:hover:not(:disabled) {
-            background: var(--button-hover-transparent);
+        #grab-button:hover:not(:disabled) {
+            background: var(--grape-deep);
         }
     }
 
-    #download-button:active:not(:disabled) {
-        background: var(--button-press-transparent);
+    #grab-button:active:not(:disabled) {
+        background: var(--grape-deep);
+    }
+
+    #grab-button.state-done {
+        background: var(--lime);
+        color: var(--ink);
+    }
+
+    #grab-button.state-error {
+        background: var(--splat);
+        color: var(--ink);
+    }
+
+    #grab-button:disabled {
+        cursor: wait;
+    }
+
+    #grab-button.state-done:disabled,
+    #grab-button.state-error:disabled {
+        cursor: default;
     }
 </style>

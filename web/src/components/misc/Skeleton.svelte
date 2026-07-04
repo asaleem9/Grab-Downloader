@@ -25,7 +25,7 @@
 <style>
     .skeleton {
         border-radius: calc(var(--border-radius) / 2);
-        background-color: var(--button);
+        background-color: var(--button-hover);
         background-image: var(--skeleton-gradient);
         background-size: 200px 100%;
         background-repeat: no-repeat;
@@ -37,10 +37,6 @@
         font-size: 1em;
         text-align: center;
         pointer-events: none;
-    }
-
-    :global([data-theme=light]) .skeleton {
-        background-color: var(--button-hover);
     }
 
     .skeleton.elevated {

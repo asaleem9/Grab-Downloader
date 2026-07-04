@@ -2,6 +2,7 @@
     "link_area": "поле ввода ссылки",
     "clear_input": "очистить поле ввода",
     "download": "скачать",
+    "mode_switcher": "режим загрузки",
     "download.think": "обрабатываю ссылку...",
     "download.check": "проверяю загрузку...",
     "download.done": "загрузка завершена",

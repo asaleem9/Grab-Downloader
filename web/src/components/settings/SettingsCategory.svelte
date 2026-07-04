@@ -36,13 +36,41 @@
 </section>
 
 <style>
+    /* every category is a puddle: a sticker card that pops in */
     .settings-content {
         display: flex;
         flex-direction: column;
         gap: 10px;
-        padding: calc(var(--subnav-padding) / 2);
-        border-radius: 18px;
+        padding: var(--padding);
+        border-radius: var(--radius-card);
+        background: var(--milk-deep);
+        border: 2.5px solid var(--ink);
+        box-shadow: var(--shadow-pop);
         transition: opacity 0.2s;
+        animation: puddle-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+    }
+
+    section:nth-child(2) {
+        animation-delay: 60ms;
+    }
+
+    section:nth-child(3) {
+        animation-delay: 120ms;
+    }
+
+    section:nth-child(4) {
+        animation-delay: 180ms;
+    }
+
+    @keyframes puddle-in {
+        from {
+            transform: translateY(14px) scale(0.97);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
     }
 
     .settings-content.disabled {

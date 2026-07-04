@@ -1,18 +1,15 @@
 <script lang="ts">
     import { hapticError } from "$lib/haptics";
     import type { Optional } from "$lib/types/generic";
-    import type { MeowbaltEmotions } from "$lib/types/meowbalt";
     import type { DialogButton, SmallDialogIcons } from "$lib/types/dialog";
 
     import DialogContainer from "$components/dialog/DialogContainer.svelte";
 
-    import Meowbalt from "$components/misc/Meowbalt.svelte";
     import DialogButtons from "$components/dialog/DialogButtons.svelte";
 
     import IconAlertTriangle from "@tabler/icons-svelte/IconAlertTriangle.svelte";
 
     export let id: string;
-    export let meowbalt: Optional<MeowbaltEmotions> = undefined;
     export let icon: Optional<SmallDialogIcons> = undefined;
     export let title = "";
     export let bodyText = "";
@@ -23,8 +20,7 @@
 
     let close: () => void;
 
-    // error meowbalt art is not used in dialogs unless it's an error
-    if (meowbalt === "error") {
+    if (icon === "warn-red") {
         setTimeout(() => {
             hapticError();
         }, 150)
@@ -34,17 +30,8 @@
 <DialogContainer {id} {dismissable} bind:close>
     <div
         class="dialog-body small-dialog"
-        class:meowbalt-visible={meowbalt}
         class:align-left={leftAligned}
     >
-        {#if meowbalt}
-            <div class="meowbalt-container">
-                <Meowbalt
-                    emotion={meowbalt}
-                    forceLoaded={id === 'nojs-dialog'}
-                />
-            </div>
-        {/if}
         <div class="dialog-inner-container">
             {#if title || icon}
                 <div class="popup-header">
@@ -92,18 +79,10 @@
         margin: calc(var(--padding) / 2);
     }
 
-    .small-dialog.meowbalt-visible {
-        padding-top: calc(var(--padding) * 4);
-    }
-
-    .meowbalt-container {
-        position: absolute;
-        top: -120px;
-    }
-
     .popup-title {
         color: var(--secondary);
         font-size: 19px;
+        font-weight: 800;
     }
 
     .popup-header,
@@ -120,8 +99,18 @@
         width: 50px;
     }
 
+    /* errors arrive as a splat: the icon sits in a coral blob */
+    .warn-red {
+        background: var(--splat-milk);
+        border: 2.5px solid var(--splat);
+        border-radius: 63% 37% 54% 46% / 46% 61% 39% 54%;
+        padding: 10px 14px;
+        margin-bottom: 4px;
+    }
+
     .warn-red :global(svg) {
-        stroke: var(--red);
+        stroke: var(--splat);
+        stroke-width: 2px;
     }
 
     .body-text {

@@ -3,6 +3,7 @@
     "link_area.turnstile": "link input area. checking if you're not a robot.",
     "clear_input": "clear input",
     "download": "download",
+    "mode_switcher": "download mode",
     "download.think": "processing the link...",
     "download.check": "verifying download...",
     "download.done": "downloading done",

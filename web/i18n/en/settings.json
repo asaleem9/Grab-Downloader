@@ -10,12 +10,6 @@
     "page.local": "local processing",
     "page.accessibility": "accessibility",
 
-    "theme": "theme",
-    "theme.auto": "auto",
-    "theme.light": "light",
-    "theme.dark": "dark",
-    "theme.description": "auto theme switches between light and dark themes depending on your device's display mode.",
-
     "video.quality": "video quality",
     "video.quality.max": "8k+",
     "video.quality.2160": "4k",

@@ -1,7 +1,7 @@
 <script lang="ts">
     import "../app.css";
-    import "../fonts/noto-mono-grab.css";
 
+    import "@fontsource-variable/baloo-2";
     import "@fontsource/ibm-plex-mono/400.css";
     import "@fontsource/ibm-plex-mono/400-italic.css";
     import "@fontsource/ibm-plex-mono/500.css";
@@ -21,8 +21,14 @@
 
     import { device, app } from "$lib/device";
     import { getServerInfo } from "$lib/api/server-info";
-    import currentTheme, { statusBarColors } from "$lib/state/theme";
+    import { statusBarColors } from "$lib/state/theme";
     import { turnstileCreated, turnstileEnabled } from "$lib/state/turnstile";
+
+    import { motionLevel, fxTier, initGlobalSquish, initPageTransitions } from "$lib/motion";
+    import Goo from "$lib/motion/components/Goo.svelte";
+    import LiquidCursor from "$lib/motion/components/LiquidCursor.svelte";
+    import AmbientLayer from "$lib/motion/components/AmbientLayer.svelte";
+    import LiquidCurtain from "$lib/motion/components/LiquidCurtain.svelte";
 
     import Sidebar from "$components/sidebar/Sidebar.svelte";
     import Turnstile from "$components/misc/Turnstile.svelte";
@@ -31,6 +37,8 @@
     import ProcessingQueue from "$components/queue/ProcessingQueue.svelte";
     import UpdateNotification from "$components/misc/UpdateNotification.svelte";
 
+    initPageTransitions();
+
     $: reduceMotion =
         $settings.accessibility.reduceMotion || device.prefers.reducedMotion;
 
@@ -38,7 +46,6 @@
         $settings.accessibility.reduceTransparency ||
         device.prefers.reducedTransparency;
 
-    $: preloadAssets = false;
     $: plausibleLoaded = false;
 
     afterNavigate(async () => {
@@ -51,9 +58,7 @@
         }
     });
 
-    onMount(() => {
-        preloadAssets = true;
-    });
+    onMount(() => initGlobalSquish());
 </script>
 
 <svelte:head>
@@ -68,15 +73,9 @@
     {/if}
 
     {#if device.is.mobile}
-        <meta
-            name="theme-color"
-            content={statusBarColors.mobile[$currentTheme]}
-        />
+        <meta name="theme-color" content={statusBarColors.mobile} />
     {:else}
-        <meta
-            name="theme-color"
-            content={statusBarColors.desktop[$currentTheme]}
-        />
+        <meta name="theme-color" content={statusBarColors.desktop} />
     {/if}
 
     {#if plausibleLoaded || (browser && env.PLAUSIBLE_ENABLED && !$settings.privacy.disableAnalytics)}
@@ -91,14 +90,7 @@
     {/if}
 </svelte:head>
 
-<div
-    style="display: contents"
-    data-theme={browser ? $currentTheme : undefined}
-    lang={$locale}
->
-    {#if preloadAssets}
-        <div id="preload" aria-hidden="true">??</div>
-    {/if}
+<div style="display: contents" lang={$locale}>
     <div
         id="cobalt"
         class:loaded={browser}
@@ -107,7 +99,13 @@
         data-mobile={device.is.mobile}
         data-reduce-motion={reduceMotion}
         data-reduce-transparency={reduceTransparency}
+        data-fx-tier={$fxTier}
     >
+        <Goo id="goo-ui" blur={8} />
+        <Goo id="goo-cursor" blur={5} contrast={24} shift={11} composite={false} />
+        {#if browser && $motionLevel === "full"}
+            <LiquidCursor />
+        {/if}
         {#if device.is.iPhone && app.is.installed}
             <NotchSticker />
         {/if}
@@ -118,6 +116,8 @@
         {/if}
         <ProcessingQueue />
         <div id="content">
+            <AmbientLayer />
+            <LiquidCurtain />
             {#if ($turnstileEnabled && $page.url.pathname === "/") || $turnstileCreated}
                 <Turnstile />
             {/if}
@@ -159,7 +159,10 @@
     #content {
         display: flex;
         overflow: scroll;
-        background-color: var(--primary);
+        position: relative;
+        /* background lives on #cobalt so the ambient layer's
+           negative z-index children can paint above it */
+        background-color: transparent;
         box-shadow: 0 0 0 var(--content-border-thickness) var(--content-border);
         margin-left: var(--content-border-thickness);
     }
@@ -182,12 +185,6 @@
     }
 
     @media screen and (max-width: 535px) {
-        /* dark navbar cuz it looks better on mobile */
-        :global([data-theme="light"]) {
-            --sidebar-bg: #000000;
-            --sidebar-highlight: var(--primary);
-        }
-
         #cobalt {
             display: grid;
             grid-template-columns: unset;
@@ -209,24 +206,5 @@
             border-bottom-left-radius: calc(var(--border-radius) * 2);
             border-bottom-right-radius: calc(var(--border-radius) * 2);
         }
-    }
-
-    /* preload assets to prevent flickering when they appear on screen */
-    #preload {
-        width: 0;
-        height: 0;
-        position: absolute;
-        z-index: -10;
-        content: url(/meowbalt/smile.png) url(/meowbalt/error.png)
-            url(/meowbalt/question.png) url(/meowbalt/think.png);
-
-        font-family: "Noto Sans Mono";
-        font-size: 0;
-        opacity: 0;
-
-        pointer-events: none;
-        user-select: none;
-        -webkit-user-select: none;
-        -webkit-user-drag: none;
     }
 </style>

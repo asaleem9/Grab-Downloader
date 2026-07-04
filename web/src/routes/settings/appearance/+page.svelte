@@ -1,11 +1,8 @@
 <script lang="ts">
     import settings from "$lib/state/settings";
 
-    import { themeOptions } from "$lib/types/settings";
     import { t, locales } from "$lib/i18n/translations";
 
-    import Switcher from "$components/buttons/Switcher.svelte";
-    import SettingsButton from "$components/buttons/SettingsButton.svelte";
     import SettingsToggle from "$components/buttons/SettingsToggle.svelte";
     import SettingsCategory from "$components/settings/SettingsCategory.svelte";
     import SettingsDropdown from "$components/settings/SettingsDropdown.svelte";
@@ -19,20 +16,6 @@
         }, {});
     };
 </script>
-
-<SettingsCategory sectionId="theme" title={$t("settings.theme")}>
-    <Switcher big={true} description={$t("settings.theme.description")}>
-        {#each themeOptions as value}
-            <SettingsButton
-                settingContext="appearance"
-                settingId="theme"
-                settingValue={value}
-            >
-                {$t(`settings.theme.${value}`)}
-            </SettingsButton>
-        {/each}
-    </Switcher>
-</SettingsCategory>
 
 <SettingsCategory sectionId="language" title={$t("settings.language")}>
     <SettingsToggle
@@ -53,4 +36,3 @@
         disabled={$settings.appearance.autoLanguage}
     />
 </SettingsCategory>
-

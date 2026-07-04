@@ -10,6 +10,8 @@
     import { currentTasks } from "$lib/state/task-manager/current-tasks";
     import { clearQueue, queue as readableQueue } from "$lib/state/task-manager/queue";
 
+    import { gsap, motionOK } from "$lib/motion";
+
     import SectionHeading from "$components/misc/SectionHeading.svelte";
     import PopoverContainer from "$components/misc/PopoverContainer.svelte";
     import ProcessingStatus from "$components/queue/ProcessingStatus.svelte";
@@ -20,6 +22,26 @@
 
     const popoverAction = () => {
         $queueVisible = !$queueVisible;
+    };
+
+    let listEl: HTMLDivElement | undefined = $state();
+
+    /* the drain: bubbles funnel down and out before the queue clears */
+    const drainQueue = () => {
+        if (!listEl || !motionOK()) return clearQueue();
+
+        const items = listEl.querySelectorAll(".processing-item");
+        if (!items.length) return clearQueue();
+
+        gsap.to(items, {
+            y: 56,
+            scale: 0.6,
+            opacity: 0,
+            stagger: 0.05,
+            duration: 0.3,
+            ease: "power2.in",
+            onComplete: clearQueue,
+        });
     };
 
     let queue = $derived(Object.entries($readableQueue));
@@ -42,6 +64,12 @@
     beforeNavigate((event) => {
         if (event.type === "leave" && (totalProgress > 0 && totalProgress < 1)) {
             event.cancel();
+
+            /* the flask objects to being abandoned mid-download */
+            const flask = document.querySelector("#processing-status");
+            if (flask && motionOK()) {
+                gsap.fromTo(flask, { x: 0 }, { x: 7, duration: 0.5, ease: "wobble" });
+            }
         }
     });
 </script>
@@ -70,7 +98,7 @@
                     {#if queue.length}
                         <button
                             class="clear-button"
-                            onclick={clearQueue}
+                            onclick={drainQueue}
                             tabindex={!$queueVisible ? -1 : undefined}
                         >
                             <IconX />
@@ -81,7 +109,7 @@
             </div>
         </div>
 
-        <div id="processing-list" role="list" aria-labelledby="queue-title">
+        <div id="processing-list" bind:this={listEl} role="list" aria-labelledby="queue-title">
             {#each queue as [id, item]}
                 <ProcessingQueueItem {id} info={item} />
             {/each}
@@ -113,6 +141,11 @@
         padding-bottom: 0;
         width: calc(100% - 16px * 2);
         max-width: 425px;
+
+        background: var(--milk-deep);
+        border: 2.5px solid var(--ink);
+        border-radius: var(--radius-card);
+        box-shadow: var(--shadow-pop);
     }
 
     #processing-header {
@@ -154,7 +187,11 @@
     }
 
     .clear-button {
-        color: var(--medium-red);
+        color: var(--ink);
+        background: var(--splat-milk) !important;
+        border: 2px solid var(--ink);
+        border-radius: var(--blob-b) !important;
+        padding: 3px 10px !important;
     }
 
     #processing-list {

@@ -1,59 +1,91 @@
 :root {
-    --primary: #ffffff;
-    --secondary: #000000;
+    /* ~ grape soda ~ the one and only theme */
+    --milk: #FFF3E2;
+    --milk-deep: #F5E6CE;
+    --ink: #2B1B3D;
+    --ink-soft: #6E5A85;
+    --grape: #6A00FF;
+    --grape-deep: #4B00B5;
+    --tangerine: #FF7A00;
+    --lime: #B8E92D;
+    --splat: #FF3D5E;
+
+    --grape-milk: #EDE3FF;
+    --tangerine-milk: #FFE4C7;
+    --lime-milk: #EAF7CF;
+    --splat-milk: #FFDCE3;
+
+    --primary: var(--milk);
+    --secondary: var(--ink);
 
     --white: #ffffff;
-    --gray: #75757e;
+    --gray: var(--ink-soft);
 
-    --red: #ed2236;
-    --medium-red: #ce3030;
-    --dark-red: #d61c2e;
-    --green: #30bd1b;
-    --blue: #2f8af9;
-    --magenta: #eb445a;
-    --purple: #5857d4;
-    --orange: #f19a38;
+    --red: var(--splat);
+    --medium-red: #e02246;
+    --dark-red: #d01c3e;
+    --green: #5c8a10;
+    --blue: var(--grape);
+    --magenta: #c81e8e;
+    --purple: var(--grape);
+    --orange: var(--tangerine);
 
-    --focus-ring: solid 2px var(--blue);
-    --focus-ring-offset: -2px;
+    --focus-ring: solid 3px var(--grape);
+    --focus-ring-offset: 3px;
 
-    --button: #f4f4f4;
-    --button-hover: #ededed;
-    --button-press: #e8e8e8;
-    --button-active-hover: #2a2a2a;
+    --button: var(--milk-deep);
+    --button-hover: #efdbba;
+    --button-press: #e9d2a9;
+    --button-active-hover: #3d2a52;
 
-    --button-hover-transparent: rgba(0, 0, 0, 0.06);
-    --button-press-transparent: rgba(0, 0, 0, 0.09);
-    --button-stroke: rgba(0, 0, 0, 0.06);
-    --button-text: #282828;
-    --button-box-shadow: 0 0 0 1px var(--button-stroke) inset;
+    --button-hover-transparent: rgba(43, 27, 61, 0.07);
+    --button-press-transparent: rgba(43, 27, 61, 0.12);
+    --button-stroke: transparent;
+    --button-text: var(--ink);
+    --button-box-shadow: none;
 
-    --button-elevated: #e3e3e3;
-    --button-elevated-hover: #dadada;
-    --button-elevated-press: #d3d3d3;
-    --button-elevated-shimmer: #ededed;
+    --button-elevated: #eddcc0;
+    --button-elevated-hover: #e6d1ac;
+    --button-elevated-press: #dfc698;
+    --button-elevated-shimmer: #f5e9d4;
 
-    --popover-glow: var(--button-stroke);
+    --popover-glow: transparent;
 
-    --popup-bg: #f1f1f1;
-    --popup-stroke: rgba(0, 0, 0, 0.08);
+    --popup-bg: #fceeda;
+    --popup-stroke: rgba(43, 27, 61, 0.2);
 
-    --dialog-backdrop: rgba(255, 255, 255, 0.3);
+    --dialog-backdrop: rgba(43, 27, 61, 0.45);
 
-    --sidebar-bg: var(--button);
-    --sidebar-highlight: var(--secondary);
-    --sidebar-stroke: rgba(0, 0, 0, 0.04);
+    --sidebar-bg: var(--milk);
+    --sidebar-highlight: var(--grape);
+    --sidebar-stroke: transparent;
 
-    --content-border: rgba(0, 0, 0, 0.03);
-    --content-border-thickness: 1px;
+    --content-border: transparent;
+    --content-border-thickness: 0px;
 
-    --input-border: #adadb7;
+    --input-border: var(--ink);
 
-    --toggle-bg: var(--input-border);
-    --toggle-bg-enabled: var(--secondary);
+    --toggle-bg: #d9c6a8;
+    --toggle-bg-enabled: var(--grape);
 
     --padding: 12px;
-    --border-radius: 11px;
+    --border-radius: 20px;
+
+    /* liquid shape language */
+    --blob-a: 58% 42% 55% 45% / 48% 55% 45% 52%;
+    --blob-b: 45% 55% 48% 52% / 55% 44% 56% 45%;
+    --blob-c: 52% 48% 44% 56% / 46% 58% 42% 54%;
+    --radius-card: 28px;
+    --outline-ink: 3px solid var(--ink);
+    --outline-ink-thin: 2.5px solid var(--ink);
+    --shadow-pop: 4px 5px 0 var(--ink);
+    --shadow-pop-hover: 6px 8px 0 var(--ink);
+    --ease-liquid: cubic-bezier(0.53, 0.05, 0.23, 1.15);
+    --goo-blur-desktop: 8;
+    --goo-blur-mobile: 5;
+
+    --font-liquid: "Baloo 2 Variable", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", monospace;
 
     --sidebar-width: 80px;
     --sidebar-font-size: 11px;
@@ -77,78 +109,11 @@
     /* used for fading the tab bar on scroll */
     --sidebar-mobile-gradient: linear-gradient(
         90deg,
-        rgba(0, 0, 0, 0.9) 0%,
-        rgba(0, 0, 0, 0) 5%,
-        rgba(0, 0, 0, 0) 50%,
-        rgba(0, 0, 0, 0) 95%,
-        rgba(0, 0, 0, 0.9) 100%
-    );
-
-    --skeleton-gradient: linear-gradient(
-        90deg,
-        var(--button-hover),
-        var(--button),
-        var(--button-hover)
-    );
-
-    --skeleton-gradient-elevated: linear-gradient(
-        90deg,
-        var(--button-elevated),
-        var(--button-elevated-shimmer),
-        var(--button-elevated)
-    );
-}
-
-[data-theme="dark"] {
-    --primary: #000000;
-    --secondary: #e1e1e1;
-
-    --gray: #818181;
-
-    --blue: #2a7ce1;
-    --green: #37aa42;
-
-    --button: #191919;
-    --button-hover: #242424;
-    --button-press: #2a2a2a;
-
-    --button-active-hover: #f9f9f9;
-
-    --button-hover-transparent: rgba(225, 225, 225, 0.1);
-    --button-press-transparent: rgba(225, 225, 225, 0.15);
-    --button-stroke: rgba(255, 255, 255, 0.05);
-    --button-text: #e1e1e1;
-    --button-box-shadow: 0 0 0 1px var(--button-stroke) inset;
-
-    --button-elevated: #282828;
-    --button-elevated-hover: #2f2f2f;
-    --button-elevated-press: #343434;
-
-    --popover-glow: rgba(135, 135, 135, 0.12);
-
-    --popup-bg: #191919;
-    --popup-stroke: rgba(255, 255, 255, 0.08);
-
-    --dialog-backdrop: rgba(0, 0, 0, 0.3);
-
-    --sidebar-bg: #131313;
-    --sidebar-highlight: var(--secondary);
-    --sidebar-stroke: rgba(255, 255, 255, 0.04);
-
-    --content-border: rgba(255, 255, 255, 0.045);
-
-    --input-border: #383838;
-
-    --toggle-bg: var(--input-border);
-    --toggle-bg-enabled: #8a8a8a;
-
-    --sidebar-mobile-gradient: linear-gradient(
-        90deg,
-        rgba(19, 19, 19, 0.9) 0%,
-        rgba(19, 19, 19, 0) 5%,
-        rgba(19, 19, 19, 0) 50%,
-        rgba(19, 19, 19, 0) 95%,
-        rgba(19, 19, 19, 0.9) 100%
+        rgba(255, 243, 226, 0.9) 0%,
+        rgba(255, 243, 226, 0) 5%,
+        rgba(255, 243, 226, 0) 50%,
+        rgba(255, 243, 226, 0) 95%,
+        rgba(255, 243, 226, 0.9) 100%
     );
 
     --skeleton-gradient: linear-gradient(
@@ -171,12 +136,8 @@
     --sidebar-height-mobile: calc(50px + env(safe-area-inset-bottom));
 }
 
-[data-theme="light"] [data-reduce-transparency="true"] {
-    --dialog-backdrop: rgba(255, 255, 255, 0.6);
-}
-
-[data-theme="dark"] [data-reduce-transparency="true"] {
-    --dialog-backdrop: rgba(0, 0, 0, 0.5);
+[data-reduce-transparency="true"] {
+    --dialog-backdrop: rgba(43, 27, 61, 0.7);
 }
 
 html,
@@ -188,7 +149,7 @@ body {
 }
 
 * {
-    font-family: "IBM Plex Mono", monospace;
+    font-family: var(--font-liquid);
     user-select: none;
     scrollbar-width: none;
     -webkit-user-select: none;
@@ -196,13 +157,23 @@ body {
     -webkit-tap-highlight-color: transparent;
 }
 
+/* payload stays mono: urls, filenames, code, technical text */
+input,
+textarea,
+code,
+kbd,
+.mono,
+.mono * {
+    font-family: var(--font-mono);
+}
+
 ::-webkit-scrollbar {
     display: none;
 }
 
 ::selection {
-    color: var(--primary);
-    background: var(--secondary);
+    color: var(--milk);
+    background: var(--grape);
 }
 
 a {
@@ -224,7 +195,7 @@ button, .button {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 6px 13px;
+    padding: 6px 14px;
     gap: 6px;
     border: none;
     border-radius: var(--border-radius);
@@ -256,8 +227,8 @@ a:not(.sidebar-tab):not(.subnav-tab):focus-visible {
 }
 
 .button.active {
-    color: var(--primary);
-    background-color: var(--secondary);
+    color: var(--milk);
+    background-color: var(--grape);
 }
 
 /* important is used because active class is toggled by state */
@@ -265,7 +236,7 @@ a:not(.sidebar-tab):not(.subnav-tab):focus-visible {
 .button.active:focus-visible,
 a.active:focus-visible {
     color: var(--white) !important;
-    background-color: var(--blue) !important;
+    background-color: var(--grape-deep) !important;
 }
 
 @media (hover: hover) {
@@ -278,7 +249,7 @@ a.active:focus-visible {
     }
 
     .button.active:not(.color):hover {
-        background-color: var(--button-active-hover);
+        background-color: var(--grape-deep);
     }
 }
 
@@ -295,7 +266,7 @@ a.active:focus-visible {
 }
 
 .button.active:not(.color):active {
-    background-color: var(--button-active-hover);
+    background-color: var(--grape-deep);
 }
 
 button[disabled] {
@@ -317,22 +288,22 @@ input {
 }
 
 button {
-    font-weight: 500;
+    font-weight: 700;
 }
 
 h1, h2, h3, h4, h5, h6 {
-    font-weight: 500;
+    font-weight: 800;
     margin-block: 0;
 }
 
 h1 {
     font-size: 24px;
-    letter-spacing: -1px;
+    letter-spacing: -0.5px;
 }
 
 h2 {
     font-size: 20px;
-    letter-spacing: -1px;
+    letter-spacing: -0.5px;
 }
 
 h3 {
@@ -364,9 +335,9 @@ h6 {
 
 .long-text,
 .long-text *:not(h1, h2, h3, h4, h5, h6) {
-    line-height: 1.8;
+    line-height: 1.9;
     font-size: 14.5px;
-    font-family: "IBM Plex Mono", monospace;
+    font-family: var(--font-mono);
     user-select: text;
     -webkit-user-select: text;
 }
@@ -374,6 +345,13 @@ h6 {
 .long-text,
 .long-text *:not(h1, h2, h3, h4, h5, h6, strong, em, del) {
     font-weight: 400;
+}
+
+.long-text h1,
+.long-text h2,
+.long-text h3,
+.long-text h4 {
+    font-family: var(--font-liquid);
 }
 
 .long-text ul {
@@ -410,11 +388,15 @@ h6 {
     line-height: 1.3;
     margin-block-end: -0.3rem;
     padding: 6px 0;
-    border-bottom: 1.5px solid var(--button-elevated-hover);
+    border-bottom: 2px solid var(--button-elevated-hover);
+}
+
+.long-text a {
+    color: var(--grape);
 }
 
 .long-text img {
-    border-radius: 6px;
+    border-radius: var(--radius-card);
 }
 
 table,
@@ -431,7 +413,7 @@ th {
 code {
     background: var(--button-elevated);
     padding: 1px 4px;
-    border-radius: 4px;
+    border-radius: 6px;
 }
 
 tr td:first-child,
@@ -441,6 +423,28 @@ tr th:first-child {
 
 .long-text.about section p:first-of-type {
     margin-block-start: 0.3em;
+}
+
+/* about sections get droplet bullets in rotating flavors */
+.long-text.about .content-title::before {
+    content: "";
+    display: inline-block;
+    width: 11px;
+    height: 11px;
+    margin-right: 9px;
+    border-radius: var(--blob-b);
+    background: var(--grape);
+    border: 2px solid var(--ink);
+}
+
+.long-text.about section:nth-of-type(3n + 2) .content-title::before {
+    background: var(--tangerine);
+    border-radius: var(--blob-a);
+}
+
+.long-text.about section:nth-of-type(3n) .content-title::before {
+    background: var(--lime);
+    border-radius: var(--blob-c);
 }
 
 .long-text.about .heading-container {
@@ -457,6 +461,23 @@ tr th:first-child {
     .long-text *:not(h1, h2, h3, h4, h5, h6) {
         font-size: 14px;
     }
+}
+
+/* the liquid cursor replaces the native one on fine pointers;
+   inputs, selects and embedded iframes escape back to native */
+html.liquid-cursor,
+html.liquid-cursor * {
+    cursor: none !important;
+}
+
+html.liquid-cursor [data-cursor="native"],
+html.liquid-cursor [data-cursor="native"] * {
+    cursor: auto !important;
+}
+
+/* goo is a luxury: weak devices get plain blob radii */
+[data-fx-tier="low"] .goo-group {
+    filter: none !important;
 }
 
 [data-reduce-motion="true"] * {

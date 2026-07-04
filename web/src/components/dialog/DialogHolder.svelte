@@ -80,23 +80,41 @@
         z-index: -1;
 
         background-color: var(--dialog-backdrop);
-
-        backdrop-filter: blur(7px);
-        -webkit-backdrop-filter: blur(7px);
+        overflow: hidden;
 
         opacity: 0;
 
         will-change: opacity;
-        transition: opacity 0.2s;
+        transition: opacity 0.25s;
+    }
+
+    /* giant still blob silhouettes floating in the plum wash */
+    #dialog-backdrop::before,
+    #dialog-backdrop::after {
+        content: "";
+        position: absolute;
+        border-radius: var(--blob-a);
+        background: var(--grape-milk);
+        opacity: 0.12;
+    }
+
+    #dialog-backdrop::before {
+        width: 44vmax;
+        height: 44vmax;
+        top: -18vmax;
+        left: -14vmax;
+    }
+
+    #dialog-backdrop::after {
+        width: 36vmax;
+        height: 36vmax;
+        border-radius: var(--blob-c);
+        bottom: -16vmax;
+        right: -10vmax;
     }
 
     #dialog-backdrop.visible {
         opacity: 1;
-    }
-
-    :global([data-reduce-transparency="true"]) #dialog-backdrop {
-        backdrop-filter: none !important;
-        -webkit-backdrop-filter: none !important;
     }
 
     :global(.dialog-body) {
@@ -107,25 +125,24 @@
         align-items: center;
 
         background: var(--popup-bg);
-        box-shadow: 0 0 0 2px var(--popup-stroke) inset;
-        border-radius: 29px;
-
-        filter: drop-shadow(0 0 40px var(--button));
+        border: 2.5px solid var(--ink);
+        border-radius: var(--radius-card);
+        box-shadow: var(--shadow-pop);
 
         padding: var(--dialog-padding);
 
         position: relative;
-        will-change: transform, opacity, filter;
+        will-change: transform, opacity;
     }
 
     :global(dialog.open .dialog-body) {
-        animation: modal-in 0.35s;
+        animation: modal-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
         animation-delay: 0.06s;
         animation-fill-mode: backwards;
     }
 
     :global(dialog.closing .dialog-body) {
-        animation: modal-out 0.15s;
+        animation: modal-out 0.2s ease-in;
         opacity: 0;
     }
 
@@ -150,19 +167,22 @@
         }
     }
 
+    /* blobIn: the dialog arrives as a droplet and settles into a card */
     @keyframes modal-in {
         from {
-            transform: scale(0.8);
+            transform: scale(0.55);
+            border-radius: 46% 54% 50% 50% / 52% 48% 52% 48%;
             opacity: 0;
         }
         35% {
             opacity: 1;
         }
-        50% {
-            transform: scale(1.01);
+        70% {
+            border-radius: var(--radius-card);
         }
         100% {
             transform: scale(1);
+            border-radius: var(--radius-card);
         }
     }
 
@@ -172,7 +192,7 @@
         }
         to {
             opacity: 0;
-            transform: scale(0.9);
+            transform: scale(0.85) translateY(10px);
             visibility: hidden;
         }
     }
@@ -183,13 +203,16 @@
             opacity: 0;
         }
         1% {
-            transform: translateY(200px);
+            transform: translateY(240px);
         }
         35% {
             opacity: 1;
         }
-        50% {
-            transform: translateY(-5px);
+        55% {
+            transform: translateY(-9px) scaleY(0.96);
+        }
+        75% {
+            transform: translateY(3px) scaleY(1.01);
         }
         100% {
             transform: translateY(0px);

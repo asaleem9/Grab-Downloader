@@ -51,7 +51,7 @@
     ></script>
 </svelte:head>
 
-<div id="turnstile-container">
+<div id="turnstile-container" data-cursor="native">
     <div bind:this={turnstileElement} id="turnstile-widget"></div>
 </div>
 

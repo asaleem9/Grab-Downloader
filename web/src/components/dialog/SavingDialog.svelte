@@ -15,7 +15,6 @@
 
     import DialogContainer from "$components/dialog/DialogContainer.svelte";
 
-    import Meowbalt from "$components/misc/Meowbalt.svelte";
     import DialogButtons from "$components/dialog/DialogButtons.svelte";
     import SavingTutorial from "$components/dialog/SavingTutorial.svelte";
     import VerticalActionButton from "$components/buttons/VerticalActionButton.svelte";
@@ -47,10 +46,6 @@
 
 <DialogContainer {id} {dismissable} bind:close>
     <div class="dialog-body popup-body">
-        <div class="meowbalt-container">
-            <Meowbalt emotion="think" />
-        </div>
-
         <div class="dialog-inner-container">
             <div class="popup-header">
                 <IconFileDownload />
@@ -161,14 +156,6 @@
         margin: calc(var(--padding) / 2);
     }
 
-    .meowbalt-container {
-        position: absolute;
-        top: -126px;
-        right: 0;
-        /* simulate meowbalt being behind the popup */
-        clip-path: inset(0px 0px 14px 0px);
-    }
-
     .popup-header {
         display: flex;
         flex-direction: row;
@@ -192,6 +179,24 @@
         flex-direction: row;
         gap: calc(var(--padding) / 2);
         position: relative;
+    }
+
+    /* each saving method is its own flavored droplet */
+    .action-buttons :global(.button) {
+        border: 2px solid var(--ink);
+        border-radius: var(--blob-b);
+    }
+
+    .action-buttons :global(#button-save-download) {
+        background: var(--grape-milk);
+    }
+
+    .action-buttons :global(#button-save-share) {
+        background: var(--tangerine-milk);
+    }
+
+    .action-buttons :global(#button-save-copy) {
+        background: var(--lime-milk);
     }
 
     .body-text {
