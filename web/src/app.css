@@ -425,6 +425,28 @@ tr th:first-child {
     margin-block-start: 0.3em;
 }
 
+/* about sections get droplet bullets in rotating flavors */
+.long-text.about .content-title::before {
+    content: "";
+    display: inline-block;
+    width: 11px;
+    height: 11px;
+    margin-right: 9px;
+    border-radius: var(--blob-b);
+    background: var(--grape);
+    border: 2px solid var(--ink);
+}
+
+.long-text.about section:nth-of-type(3n + 2) .content-title::before {
+    background: var(--tangerine);
+    border-radius: var(--blob-a);
+}
+
+.long-text.about section:nth-of-type(3n) .content-title::before {
+    background: var(--lime);
+    border-radius: var(--blob-c);
+}
+
 .long-text.about .heading-container {
     padding-top: calc(var(--padding) / 2);
 }

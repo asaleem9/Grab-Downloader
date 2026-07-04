@@ -64,8 +64,13 @@
         justify-content: center;
         align-items: center;
         padding: var(--small-padding);
-        border-radius: 5px;
+        border-radius: var(--blob-b);
         background: var(--icon-color);
+        transition: border-radius 0.3s var(--ease-liquid);
+    }
+
+    .subnav-tab.active .tab-icon {
+        border-radius: var(--blob-a);
     }
 
     .subnav-tab .tab-icon :global(svg) {
@@ -109,8 +114,9 @@
     }
 
     .subnav-tab.active {
-        background: var(--secondary);
-        color: var(--primary);
+        background: var(--grape);
+        color: var(--white);
+        border-radius: 14px 20px 16px 22px / 20px 14px 22px 16px;
         cursor: default;
     }
 

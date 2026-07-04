@@ -187,10 +187,10 @@
     }
 
     #input-container {
-        border-radius: var(--border-radius);
+        border-radius: 14px 20px 16px 22px / 20px 14px 22px 16px;
         color: var(--secondary);
-        background-color: var(--button);
-        box-shadow: var(--button-box-shadow);
+        background-color: var(--milk);
+        border: 2px solid var(--ink);
         display: flex;
         align-items: center;
         width: 100%;

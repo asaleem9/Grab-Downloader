@@ -51,6 +51,7 @@
         <select
             on:click={() => hapticSwitch()}
             on:change={(e) => onChange(e)}
+            data-cursor="native"
             {disabled}
         >
             {#each Object.keys(items) as value, i}
@@ -92,6 +93,10 @@
         position: relative;
 
         padding: calc(var(--switcher-padding) * 2) 16px;
+
+        border: 2px solid var(--ink);
+        border-radius: 16px 22px 18px 24px / 22px 16px 24px 18px;
+        background: var(--milk);
 
         pointer-events: all;
         overflow: scroll;
