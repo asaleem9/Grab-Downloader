@@ -102,7 +102,7 @@
         data-fx-tier={$fxTier}
     >
         <Goo id="goo-ui" blur={8} />
-        <Goo id="goo-cursor" blur={5} contrast={24} shift={11} composite={false} />
+        <Goo id="goo-cursor" blur={3} composite operator="over" />
         {#if browser && $motionLevel === "full"}
             <LiquidCursor />
         {/if}

@@ -318,9 +318,9 @@
     }
 
     .cursor-dot {
-        width: 10px;
-        height: 10px;
-        margin: -5px 0 0 -5px;
+        width: 13px;
+        height: 13px;
+        margin: -6.5px 0 0 -6.5px;
         background: var(--ink);
     }
 
@@ -329,15 +329,15 @@
     }
 
     .f1 {
-        width: 8px;
-        height: 8px;
-        margin: -4px 0 0 -4px;
+        width: 9px;
+        height: 9px;
+        margin: -4.5px 0 0 -4.5px;
     }
 
     .f2 {
-        width: 6px;
-        height: 6px;
-        margin: -3px 0 0 -3px;
+        width: 7px;
+        height: 7px;
+        margin: -3.5px 0 0 -3.5px;
     }
 
     .cursor-ring {
