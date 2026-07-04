@@ -2,28 +2,67 @@
 
 ## The Problem
 
-YouTube aggressively blocks datacenter IPs (like those from GCP, AWS, Azure). Even with the TV_SIMPLY client and Onesie API enabled, you may experience:
-- "file tunnel is empty" errors
-- Rate limiting
-- Random video failures
+YouTube blocks datacenter IPs (GCP, AWS, Azure). Requests from a flagged IP
+with no bot-evasion signals get `error.api.youtube.login` — the
+"sign in to confirm you're not a bot" challenge. The same video downloads fine
+from a residential IP.
 
-## Required Environment Variables
+## The Fix (verified on this Cloud Run deployment)
 
-These must be set regardless of where you deploy:
+**Setting the three YouTube env vars below is what beats the challenge.** They
+make requests present as the TV client with a generated poToken over YouTube's
+TV streaming API — enough "not a bot" signal to pass from GCP's datacenter IP,
+with no account cookies or proxy required.
 
 ```bash
-CUSTOM_INNERTUBE_CLIENT=TV_SIMPLY
-YOUTUBE_GENERATE_PO_TOKENS=1
-YOUTUBE_USE_ONESIE=1
+CUSTOM_INNERTUBE_CLIENT=TV_SIMPLY   # TV client, far less strict bot detection
+YOUTUBE_GENERATE_PO_TOKENS=1        # generate poTokens via bgutils-js
+YOUTUBE_USE_ONESIE=1                # use YouTube's TV streaming API
 ```
 
-| Variable | Purpose |
-|----------|---------|
-| `CUSTOM_INNERTUBE_CLIENT=TV_SIMPLY` | Uses TV client with less strict bot detection |
-| `YOUTUBE_GENERATE_PO_TOKENS=1` | Enables poToken generation via bgutils-js |
-| `YOUTUBE_USE_ONESIE=1` | Uses YouTube's TV streaming API |
+These are wired into `.github/workflows/deploy-api.yml` (the Cloud Run
+`--set-env-vars` line), so every deploy keeps them. **Do not drop them** — a
+deploy that omits them replaces all env vars and the bot challenge comes back.
+To apply without a code deploy:
 
-## Solution: Cloudflare WARP via Gluetun
+```bash
+gcloud run services update grab-api --project=grab-media-dl --region=us-central1 \
+  --update-env-vars="CUSTOM_INNERTUBE_CLIENT=TV_SIMPLY,YOUTUBE_GENERATE_PO_TOKENS=1,YOUTUBE_USE_ONESIE=1"
+```
+
+## Escalation ladder (only if YouTube tightens again)
+
+The env-var fix above is sufficient today. YouTube's detection evolves, so if
+challenges return, escalate in this order — each is a bigger hammer:
+
+### 1. YouTube cookies (strongest, no recurring cost)
+
+A logged-in session directly satisfies "sign in to confirm you're not a bot".
+cobalt reads a JSON cookie file (`COOKIE_PATH`) with a `youtube` array of
+cookie strings. Use a **burner Google account**, never your personal one, and
+store the file as a secret — never in the image or repo.
+
+1. Log into YouTube in a fresh browser profile with a burner account.
+2. Export the `youtube.com` cookies (e.g. a cookies.txt extension), and shape
+   them into cobalt's format: `{ "youtube": ["cookie1=value1", "cookie2=value2", ...] }`.
+3. Store as a GCP secret and mount it into the container:
+   ```bash
+   gcloud secrets create grab-youtube-cookies --data-file=cookies.json --project=grab-media-dl
+   gcloud run services update grab-api --project=grab-media-dl --region=us-central1 \
+     --update-secrets=/cookies/cookies.json=grab-youtube-cookies:latest \
+     --update-env-vars=COOKIE_PATH=/cookies/cookies.json
+   ```
+   (To make it permanent, add the same `--set-secrets` / `COOKIE_PATH` to the
+   deploy workflow.)
+
+### 2. Residential / Cloudflare WARP proxy
+
+Route egress through a non-datacenter IP via `HTTP_PROXY`/`HTTPS_PROXY`. Note
+Cloud Run can't run a gluetun sidecar (no `/dev/net/tun`), so this means either
+an external residential proxy service (ongoing cost) or moving the API to a
+Compute Engine VM. The VM + Cloudflare WARP compose setup is below.
+
+## Compute Engine + Cloudflare WARP via Gluetun (VM only)
 
 Cloudflare WARP (free) routes traffic through Cloudflare's network, which has better IP reputation than raw datacenter IPs.
 
